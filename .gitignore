@@ -1,0 +1,8 @@
+/bin
+/*.egg-info
+/include
+/lib
+/.coverage
+/.coverage.*
+_build/
+/.cache
