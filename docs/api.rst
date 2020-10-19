@@ -2,5 +2,6 @@ API Reference
 =============
 
 .. automodule:: giterator
-   :members:
-   :member-order: bysource
+    :members:
+    :special-members: __call__
+    :member-order: bysource
