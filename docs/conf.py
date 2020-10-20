@@ -26,7 +26,8 @@ exclude_patterns = [
 pygments_style = 'sphinx'
 
 # Options for HTML output
-html_theme = 'default' if on_rtd else 'sphinx_rtd_theme'
+html_theme = "furo"
+html_title = "giterator"
 htmlhelp_basename = project+'doc'
 
 # Options for LaTeX output
