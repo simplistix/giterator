@@ -1,6 +1,6 @@
 from os import makedirs
 from pathlib import Path
-from subprocess import check_output, STDOUT
+from subprocess import check_output, STDOUT, CalledProcessError
 from typing import Union
 
 
@@ -12,6 +12,12 @@ class User:
     def __init__(self, name: str, email: str):
         self.name = name
         self.email = email
+
+
+class GitError(Exception):
+    """
+    Something went wrong while running a git command.
+    """
 
 
 class Git:
@@ -35,7 +41,12 @@ class Git:
 
             Git(...)('log', '-1')
         """
-        return check_output(('git',) + command, cwd=self.path, stderr=STDOUT)
+        try:
+            return check_output(('git',) + command, cwd=self.path, stderr=STDOUT)
+        except CalledProcessError as e:
+            raise GitError(
+                f"{' '.join(e.cmd)} gave:\n\n{e.output.decode()}\n\n"
+            ) from None
 
     def init(self, user: User = None):
         """

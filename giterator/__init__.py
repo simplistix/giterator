@@ -1,4 +1,4 @@
-from .git import Git, User
+from .git import Git, GitError, User
 
 
 __all__ = [
