@@ -36,4 +36,7 @@ setup(
         ],
         build=['furo', 'sphinx', 'setuptools-git', 'twine', 'wheel']
     ),
+    entry_points={
+        'console_scripts': ['giterator=giterator.cli:main'],
+    }
 )
