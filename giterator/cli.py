@@ -20,7 +20,8 @@ class Unpack(Command):
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(required=True, dest='command')
+    subparsers = parser.add_subparsers(dest='command')
+    subparsers.required = True
     for command_class in Command.__subclasses__():
         command_parser = subparsers.add_parser(command_class.__name__.lower())
         command = command_class()
