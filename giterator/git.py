@@ -71,7 +71,7 @@ class Git:
 
     @staticmethod
     def _coerce_date(dt):
-        return dt if isinstance(dt, str) else  dt.isoformat()
+        return dt if isinstance(dt, str) else dt.isoformat()
 
     def commit(self, msg: str, author_date: Date = None, commit_date: Date = None):
         """
@@ -88,4 +88,4 @@ class Git:
         env = {}
         if commit_date:
             env['GIT_COMMITTER_DATE'] = self._coerce_date(commit_date)
-        self(*command, **env)
+        self(*command, env=env)

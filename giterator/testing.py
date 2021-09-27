@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Union
 
 from .git import Git, User
+from .typing import Date
 
 
 class Repo(Git):
@@ -17,3 +18,6 @@ class Repo(Git):
             container = Path(container)
         super().__init__(container / name)
         self.init(User(name='Giterator', email='giterator@example.com'))
+
+    def commit(self, msg: str, author_date: Date = None, commit_date: Date = None):
+        super().commit(msg, author_date, commit_date or author_date)
