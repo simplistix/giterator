@@ -53,7 +53,7 @@ class Git:
             ) from None
         return output.decode()
 
-    def init(self, user: User = None):
+    def init(self, user: User = None) -> None:
         """
         Create an empty Git repository or reinitialize an existing one.
         If the path doesn't exist, it will be created. This includes any missing
