@@ -35,7 +35,7 @@ class Git:
         #: The path where this instance is located.
         self.path: Path = path
 
-    def __call__(self, *command, **env):
+    def __call__(self, *command, env: dict = None) -> str:
         """
         Run a git command in this repo. For example:
 
@@ -44,13 +44,14 @@ class Git:
             Git(...)('log', '-1')
         """
         try:
-            return check_output(
+            output = check_output(
                 ('git',) + command, cwd=self.path, stderr=STDOUT, env=env
-            ).decode()
+            )
         except CalledProcessError as e:
             raise GitError(
-                f"{' '.join(e.cmd)} gave:\n\n{e.output.decode()}\n\n"
+                f"{' '.join(e.cmd)!r} gave:\n\n{e.output.decode()}\n\n"
             ) from None
+        return output.decode()
 
     def init(self, user: User = None):
         """

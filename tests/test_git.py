@@ -1,19 +1,26 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
+import pytest
 from testfixtures import TempDirectory, compare, ShouldRaise
 
-from giterator import Git, User, GitError
+from giterator import Git, User
+from giterator.git import GitError
+from giterator.testing import Repo
+
+
+@pytest.fixture()
+def repo(tmpdir: TempDirectory):
+    return Repo(tmpdir.path)
 
 
 class TestCall:
 
-    def test_bad_command(self, git):
+    def test_bad_command(self, repo: Repo):
         with ShouldRaise(GitError) as s:
-            git('wut')
-        message = str(s.raised)
-        assert message.startswith('git wut gave:\n\n')
-        assert "wut' is not a git command" in message
+            repo('wut')
+        assert str(s.raised).startswith("'git wut' gave:")
+        assert "git: 'wut' is not a git command" in str(s.raised)
 
 
 class TestInit:
