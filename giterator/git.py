@@ -53,6 +53,8 @@ class Git:
             ) from None
         return output.decode()
 
+    git = __call__
+
     def init(self, user: User = None) -> None:
         """
         Create an empty Git repository or reinitialize an existing one.
