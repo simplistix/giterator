@@ -49,7 +49,8 @@ class Git:
             )
         except CalledProcessError as e:
             raise GitError(
-                f"{' '.join(e.cmd)!r} gave:\n\n{e.output.decode()}\n\n"
+                f"{' '.join(e.cmd)!r} gave return code {e.returncode}:\n\n"
+                f"{e.output.decode()}\n\n"
             ) from None
         return output.decode()
 

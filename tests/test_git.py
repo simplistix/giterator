@@ -19,7 +19,7 @@ class TestCall:
     def test_bad_command(self, repo: Repo):
         with ShouldRaise(GitError) as s:
             repo('wut')
-        assert str(s.raised).startswith("'git wut' gave:")
+        assert str(s.raised).startswith("'git wut' gave return code 1:")
         assert "git: 'wut' is not a git command" in str(s.raised)
 
 
