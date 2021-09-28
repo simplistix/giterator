@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import pytest
 from testfixtures import TempDirectory
 
+from giterator import Git, User
 from giterator.testing import Repo
 
 
@@ -12,4 +15,11 @@ def tmpdir():
 
 @pytest.fixture()
 def git(tmpdir: TempDirectory):
+    git_ = Git(Path(tmpdir.path) / 'git')
+    git_.init(User(name='Giterator', email='giterator@example.com'))
+    return git_
+
+
+@pytest.fixture()
+def repo(tmpdir: TempDirectory):
     return Repo(tmpdir.path)
