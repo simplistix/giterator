@@ -1,7 +1,7 @@
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 from .typing import Date
 
@@ -29,13 +29,15 @@ class Git:
     :param path: The path to an existing work tree or local repo.
     """
 
+    _user: User = None
+
     def __init__(self, path: Union[Path, str]):
         if not isinstance(path, Path):
             path = Path(path)
         #: The path where this instance is located.
         self.path: Path = path
 
-    def __call__(self, *command, env: dict = None) -> str:
+    def __call__(self, *command, env: dict = None, cwd: Path = None) -> str:
         """
         Run a git command in this repo. For example:
 
@@ -45,7 +47,7 @@ class Git:
         """
         try:
             output = check_output(
-                ('git',) + command, cwd=self.path, stderr=STDOUT, env=env
+                ('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=env
             )
         except CalledProcessError as e:
             raise GitError(
@@ -55,6 +57,12 @@ class Git:
         return output.decode()
 
     git = __call__
+
+    def _set_user(self, user: Optional[User]):
+        if user:
+            self._user = user
+            self('config', 'user.name', user.name)
+            self('config', 'user.email', user.email)
 
     def init(self, user: User = None) -> None:
         """
@@ -66,9 +74,19 @@ class Git:
         """
         makedirs(self.path, exist_ok=True)
         self('init')
-        if user:
-            self('config', 'user.name', user.name)
-            self('config', 'user.email', user.email)
+        self._set_user(user)
+
+    @classmethod
+    def clone(cls, source: Union[str, Path, 'Git'], path: Union[str, Path], user: User = None):
+        if isinstance(source, Git):
+            user = user or source._user
+            source = source.path
+        source = Path(source)
+        dest = source.parent.joinpath(Path(path)).absolute()
+        git = cls(dest)
+        git('clone', str(source), str(git.path), cwd=source.parent)
+        git._set_user(user)
+        return git
 
     @staticmethod
     def _coerce_date(dt):

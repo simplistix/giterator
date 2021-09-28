@@ -35,6 +35,43 @@ class TestInit:
         assert b'email = foo@example.com' in config
 
 
+class TestClone:
+
+    def test_minimal(self, repo: Repo, tmpdir: TempDirectory):
+        repo.commit_content('a')
+        git = Git.clone(repo.path, tmpdir.getpath('clone'))
+        commit, = git('log', '--format=%h').split()
+        compare(git.git('show', '--pretty=format:%s', '--stat', commit), expected=(
+            'a commit\n'
+            ' a | 1 +\n'
+            ' 1 file changed, 1 insertion(+)\n'
+        ))
+        compare(git('remote', '-v').split(), expected=[
+            'origin', str(repo.path), '(fetch)',
+            'origin', str(repo.path), '(push)'
+        ])
+
+    def test_with_user(self, repo: Repo, tmpdir: TempDirectory):
+        repo.commit_content('a')
+        git = Git.clone(
+            repo.path, tmpdir.getpath('clone'), User(name='Foo Bar', email='foo@example.com')
+        )
+        config = (git.path / '.git' / 'config').read_text()
+        assert 'name = Foo Bar' in config
+        assert 'email = foo@example.com' in config
+
+    def test_repo(self, repo: Repo, tmpdir: TempDirectory):
+        repo.commit_content('a')
+        source = Git(repo.path)
+        git = Git.clone(source, tmpdir.getpath('clone'))
+        commit, = git('log', '--format=%h').split()
+        compare(git('show', '--pretty=format:%s', '--stat', commit), expected=(
+            'a commit\n'
+            ' a | 1 +\n'
+            ' 1 file changed, 1 insertion(+)\n'
+        ))
+
+
 class TestCommit:
 
     def test_from_empty(self, git: Git):
