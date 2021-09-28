@@ -112,3 +112,46 @@ class TestCommit:
         repo.commit('a commit', datetime(2001, 1, 1, 10).astimezone(timezone.utc))
         compare(repo.git('log', '--format=%aI %cI'),
                 expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n')
+
+
+class TestLabels:
+
+    def test_rev_parse(self, repo: Repo):
+        repo.commit_content('a', datetime(2001, 1, 1, 10))
+        compare(repo.rev_parse('HEAD'), expected='5ee580a')
+
+    def test_tags_empty(self, repo: Repo):
+        compare(repo.tags(), expected=[])
+
+    def test_tags(self, repo: Repo):
+        repo.commit_content('a', tag='a-tag')
+        repo.commit_content('b', tag='b-tag')
+        compare(repo.tags(), expected=['a-tag', 'b-tag'])
+
+    def test_tag_hashes_empty(self, repo: Repo):
+        compare(repo.tag_hashes(), expected={})
+
+    def test_tag_hashes(self, repo: Repo):
+        repo.commit_content('a', tag='a-tag')
+        repo.commit_content('b', tag='b-tag')
+        compare(repo.tag_hashes(),
+                expected={'a-tag': repo.rev_parse('a-tag'),
+                          'b-tag': repo.rev_parse('b-tag')})
+
+    def test_branches_empty(self, repo: Repo):
+        compare(repo.branches(), expected=[])
+
+    def test_branch(self, repo: Repo):
+        repo.commit_content('a', branch='a-branch')
+        repo.commit_content('b', branch='b-branch')
+        compare(repo.branches(), expected=['a-branch', 'b-branch'])
+
+    def test_branch_hashes_empty(self, repo: Repo):
+        compare(repo.branch_hashes(), expected={})
+
+    def test_branch_hashes(self, repo: Repo):
+        repo.commit_content('a', branch='a-branch')
+        repo.commit_content('b', branch='b-branch')
+        compare(repo.branch_hashes(),
+                expected={'a-branch': repo.rev_parse('a-branch'),
+                          'b-branch': repo.rev_parse('b-branch')})

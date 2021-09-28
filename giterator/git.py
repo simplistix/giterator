@@ -1,7 +1,7 @@
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Union
+from typing import Union, Dict, List
 
 from .typing import Date
 
@@ -90,3 +90,42 @@ class Git:
         if commit_date:
             env['GIT_COMMITTER_DATE'] = self._coerce_date(commit_date)
         self(*command, env=env)
+
+    def rev_parse(self, label: str):
+        return self('rev-parse', '--verify', '-q', '--short', label).strip()
+
+    def tag(self, name: str) -> None:
+        """
+        Create a tag with the specified name.
+        """
+        self('tag', name)
+
+    def tags(self) -> List[str]:
+        """
+        Return a list of tags in this repo.
+        """
+        return self('tag').split()
+
+    def tag_hashes(self) -> Dict[str, str]:
+        """
+        Return a mapping of tag name to commit hash.
+        """
+        return {tag: self.rev_parse(tag) for tag in self.tags()}
+
+    def branch(self, name: str) -> None:
+        """
+        Create and checkout a branch with the specified name.
+        """
+        self('checkout', '-b', name)
+
+    def branches(self) -> List[str]:
+        """
+        Return a list of branches in this repo.
+        """
+        return self('for-each-ref', '--format', '%(refname:short)', 'refs/heads/').split()
+
+    def branch_hashes(self) -> Dict[str, str]:
+        """
+        Return a mapping of branch name to commit hash.
+        """
+        return {branch: self.rev_parse(branch) for branch in self.branches()}
