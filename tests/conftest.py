@@ -22,4 +22,4 @@ def git(tmpdir: TempDirectory):
 
 @pytest.fixture()
 def repo(tmpdir: TempDirectory):
-    return Repo(tmpdir.path)
+    return Repo.make(Path(tmpdir.path) / 'repo')

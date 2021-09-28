@@ -10,17 +10,21 @@ from .typing import Date
 class Repo(Git):
     """
     A repo for use in automated tests.
-
-    :param container: The directory in which to place test repos.
-    :param name: The name for this test repo within `container`.
     """
 
-    def __init__(self, container: Union[Path, str], name: str = 'local'):
-        if not isinstance(container, Path):
-            container = Path(container)
-        super().__init__(container / name)
-        self.init(User(name='Giterator', email='giterator@example.com'))
+    def __init__(self, path: Union[Path, str]):
+        super().__init__(path)
         self._clock = Clock()
+
+    @classmethod
+    def make(cls, path: Union[Path, str], user: User = None):
+        """
+        Make a the repo at the path specified and ensure a user is configured
+        in the repo. The user can be specified.
+        """
+        repo = cls(path)
+        repo.init(user or User(name='Giterator', email='giterator@example.com'))
+        return repo
 
     def commit(self, msg: str, author_date: Date = None, commit_date: Date = None):
         super().commit(msg, author_date, commit_date or author_date)
