@@ -10,7 +10,7 @@ http://giterator.readthedocs.org/en/latest/
 If you wish to contribute to this project, then you should fork the
 repository found here:
 
-https://github.com/cjw296/giterator/
+https://github.com/simplistix/giterator/
 
 Once that has been done and you have a checkout, you can follow these
 instructions to perform various development tasks:
@@ -61,5 +61,5 @@ Making a release
 
 To make a release, just update the version in ``setup.py``,
 update the change log,
-and push to https://github.com/cjw296/giterator
+and push to https://github.com/simplistix/giterator
 and Carthorse should take care of the rest.

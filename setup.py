@@ -17,7 +17,7 @@ setup(
         "Python tools for doing git things."
     ),
     long_description=open('README.rst').read(),
-    url='https://github.com/cjw296/giterator',
+    url='https://github.com/simplistix/giterator',
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
