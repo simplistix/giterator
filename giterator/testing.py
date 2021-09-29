@@ -19,7 +19,7 @@ class Repo(Git):
     @classmethod
     def make(cls, path: Union[Path, str], user: User = None):
         """
-        Make a the repo at the path specified and ensure a user is configured
+        Make a repo at the path specified and ensure a user is configured
         in the repo. The user can be specified.
         """
         repo = cls(path)
