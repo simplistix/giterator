@@ -1,5 +1,5 @@
 # See license.txt for license details.
-# Copyright (c) 2020, Chris Withers
+# Copyright (c) 2020-2021, Chris Withers
 
 import os
 
@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='giterator',
-    version='0.0.0.dev0',
+    version='0.1.0',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',

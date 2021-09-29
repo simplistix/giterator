@@ -1,4 +1,4 @@
-Copyright (c) 2020, Chris Withers
+Copyright (c) 2020-2021, Chris Withers
 
 Permission is hereby granted, free of charge, to any person 
 obtaining a copy of this software and associated documentation 

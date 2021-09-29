@@ -3,7 +3,7 @@
 Changes
 =======
 
-X.Y.Z (DD MMM 2020)
+0.1.0 (28 Sep 2021)
 -------------------
 
 - Initial release
