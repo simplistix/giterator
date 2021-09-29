@@ -185,3 +185,18 @@ class TestLabels:
         compare(repo.branch_hashes(),
                 expected={'a-branch': repo.rev_parse('a-branch'),
                           'b-branch': repo.rev_parse('b-branch')})
+
+class TestLog:
+
+    def test_minimal(self, git: Repo):
+        (git.path / 'content.txt').write_text('content 1')
+        git.commit('commit 1', datetime(2000, 1, 1))
+        (git.path / 'content.txt').write_text('content 2')
+        git.commit('commit 2', datetime(2000, 1, 2))
+        compare(git.log(), expected=[
+            '',
+            '',
+        ])
+
+    def test_newline_in_commit_message(self):
+        pass

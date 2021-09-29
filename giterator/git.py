@@ -1,9 +1,9 @@
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Optional, Sequence
 
-from .typing import Date
+from .typing import Date, LogAttributes, LogFormat
 
 
 class User:
@@ -147,3 +147,35 @@ class Git:
         Return a mapping of branch name to commit hash.
         """
         return {branch: self.rev_parse(branch) for branch in self.branches()}
+
+    def log(
+            self,
+            attributes: LogAttributes = None,
+            start=None,
+            end=None,
+            max_count: Optional[int] = 100,
+            reverse=False,
+            *options: str
+    ) -> Sequence[Commit]:
+        format_parts = []
+        if attributes is None:
+            format_parts.extend((e.name, e.value) for e in LogFormat)
+        else:
+            for attribute in attributes:
+                if isinstance(attribute, dict):
+                    (name, value), = attribute.items()
+                else:
+                    if isinstance(attribute, str):
+                        attribute = getattr(LogFormat, attribute)
+                    name = attribute.name
+                    value = attribute.value
+                format_parts.append((name, value))
+        format_parts = [(n, *v) if isinstance(v, tuple) else (n, v, str)
+                        for (n, v) in format_parts]
+        format_spec = '\t'.join(f'{p}' for (n, p, _) in format_parts)+'%x00%B%x00%x00'
+        for data in self('log', f'--pretty=tformat:{format_spec}').split('\x00\x00\n'):
+            if data:
+                fields, message = data.split('\x00')
+                yield Commit(((n, c(v)) for ((n, _, c), v)
+                              in zip(format_parts, fields.split('\t'))),
+                             message=message)
