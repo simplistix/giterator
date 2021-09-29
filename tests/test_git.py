@@ -143,6 +143,9 @@ class TestCommit:
         compare(git('log', '--format=%aI %cI'),
                 expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n')
 
+    def test_newline_in_commit_message(self):
+        pass
+
 
 class TestLabels:
 
