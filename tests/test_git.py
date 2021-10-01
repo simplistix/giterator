@@ -38,9 +38,10 @@ class TestInit:
 class TestClone:
 
     def test_minimal(self, repo: Repo, tmpdir: TempDirectory):
-        repo.commit_content('a')
+        hash = repo.commit_content('a')
         git = Git.clone(repo.path, tmpdir.getpath('clone'))
         commit, = git('log', '--format=%h').split()
+        compare(hash, expected=commit)
         compare(git.git('show', '--pretty=format:%s', '--stat', commit), expected=(
             'a commit\n'
             ' a | 1 +\n'

@@ -92,7 +92,7 @@ class Git:
     def _coerce_date(dt):
         return dt if isinstance(dt, str) else dt.isoformat()
 
-    def commit(self, msg: str, author_date: Date = None, commit_date: Date = None):
+    def commit(self, msg: str, author_date: Date = None, commit_date: Date = None) -> str:
         """
         Commit changes in this repo, including and new or deleted files.
 
@@ -108,6 +108,7 @@ class Git:
         if commit_date:
             env['GIT_COMMITTER_DATE'] = self._coerce_date(commit_date)
         self(*command, env=env)
+        return self.rev_parse('HEAD')
 
     def rev_parse(self, label: str):
         return self('rev-parse', '--verify', '-q', '--short', label).strip()
