@@ -32,7 +32,7 @@ class TestRepo:
         upstream = Repo.make(root / 'upstream')
         upstream.commit_content('a')
         clone = Repo.clone(upstream, root / 'clone')
-        tmpdir.check('clone', 'upstream')
+        tmpdir.compare(('clone', 'upstream'), recursive=False)
         config = (clone.path / '.git' / 'config').read_text()
         assert 'name = Giterator' in config
         assert 'email = giterator@example.com' in config
@@ -40,7 +40,7 @@ class TestRepo:
     def test_with_user(self, repo: Repo, tmpdir: TempDirectory):
         repo.commit_content('a')
         clone = Repo.clone(repo, 'clone', User('Foo', 'bar@example.com'))
-        tmpdir.check('clone', 'repo')
+        tmpdir.compare(('clone', 'repo'), recursive=False)
         config = (clone.path / '.git' / 'config').read_text()
         assert 'name = Foo' in config
         assert 'email = bar@example.com' in config
