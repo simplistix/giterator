@@ -4,7 +4,7 @@ import datetime, os, pkg_resources
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 intersphinx_mapping = {
-    'http://docs.python.org': None,
+    'python': ('https://docs.python.org/3/', None),
 }
 
 extensions = [
