@@ -134,14 +134,14 @@ class TestCommit:
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10)
         git.commit('a commit', dt, dt)
-        compare(git('log', '--format=%aI %cI'),
+        compare(git('log', '--format=%aI %cI').replace("Z", "+00:00"),
                 expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n')
 
     def test_with_tz_datetime(self, git: Git):
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10).astimezone(timezone.utc)
         git.commit('a commit', dt, dt)
-        compare(git('log', '--format=%aI %cI'),
+        compare(git('log', '--format=%aI %cI').replace("Z", "+00:00"),
                 expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n')
 
 
