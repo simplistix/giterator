@@ -28,6 +28,7 @@ setup(
     python_requires=">=3.9",
     extras_require=dict(
         test=[
+            'coverage-enable-subprocess',
             'pytest',
             'pytest-cov',
             'sybil',

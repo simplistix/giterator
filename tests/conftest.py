@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -5,6 +6,10 @@ from testfixtures import TempDirectory
 
 from giterator import Git, User
 from giterator.testing import Repo
+
+
+# Enable coverage for subprocesses (CLI tests)
+os.environ.setdefault('COVERAGE_PROCESS_START', str(Path(__file__).parent.parent / '.coveragerc'))
 
 
 @pytest.fixture()

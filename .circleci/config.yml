@@ -7,6 +7,7 @@ common: &common
   jobs:
 
     - python/pip-run-tests:
+        name: tests
         matrix:
           parameters:
             image:
@@ -21,7 +22,7 @@ common: &common
         name: release
         config: .carthorse.yml
         requires:
-          - coverage
+          - tests
         filters:
           branches:
             only: master
