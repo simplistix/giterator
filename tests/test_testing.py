@@ -56,3 +56,10 @@ class TestRepo:
             ' a | 1 +\n'
             ' 1 file changed, 1 insertion(+)\n'
         ))
+
+    def test_commit_content(self, repo: Repo):
+        compare(repo.commit_content('a', datetime(2001, 1, 1, 10)), expected='5ee580a')
+
+    def test_commit_content_full(self, repo: Repo):
+        compare(repo.commit_content('a', datetime(2001, 1, 1, 10), short=False),
+                expected='5ee580aba98816af22cfa4e76ddf96bb3994964b')

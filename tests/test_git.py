@@ -151,6 +151,11 @@ class TestLabels:
         repo.commit_content('a', datetime(2001, 1, 1, 10))
         compare(repo.rev_parse('HEAD'), expected='5ee580a')
 
+    def test_rev_parse_full(self, repo: Repo):
+        repo.commit_content('a', datetime(2001, 1, 1, 10))
+        compare(repo.rev_parse('HEAD', short=False),
+                expected='5ee580aba98816af22cfa4e76ddf96bb3994964b')
+
     def test_tags_empty(self, repo: Repo):
         compare(repo.tags(), expected=[])
 

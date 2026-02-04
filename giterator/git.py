@@ -92,13 +92,20 @@ class Git:
     def _coerce_date(dt):
         return dt if isinstance(dt, str) else dt.isoformat()
 
-    def commit(self, msg: str, author_date: Date = None, commit_date: Date = None) -> str:
+    def commit(
+            self,
+            msg: str,
+            author_date: Date = None,
+            commit_date: Date = None,
+            short: bool = True,
+    ) -> str:
         """
         Commit changes in this repo, including and new or deleted files.
 
         :param msg: The commit message.
         :param author_date: The author date.
         :param commit_date: The commit date. Defaults to author date if not specified.
+        :param short: Return the short commit hash instead of the full 40-character hash.
         """
         self('add', '.')
         command = ['commit', '-m', msg]
@@ -108,10 +115,14 @@ class Git:
         if commit_date:
             env['GIT_COMMITTER_DATE'] = self._coerce_date(commit_date)
         self(*command, env=env)
-        return self.rev_parse('HEAD')
+        return self.rev_parse('HEAD', short)
 
-    def rev_parse(self, label: str):
-        return self('rev-parse', '--verify', '-q', '--short', label).strip()
+    def rev_parse(self, label: str, short: bool = True) -> str:
+        command = ['rev-parse', '--verify', '-q']
+        if short:
+            command.append('--short')
+        command.append(label)
+        return self(*command).strip()
 
     def tag(self, name: str) -> None:
         """

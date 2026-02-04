@@ -26,8 +26,14 @@ class Repo(Git):
         repo.init(user or User(name='Giterator', email='giterator@example.com'))
         return repo
 
-    def commit(self, msg: str, author_date: Date = None, commit_date: Date = None) -> str:
-        return super().commit(msg, author_date, commit_date or author_date)
+    def commit(
+        self,
+        msg: str,
+        author_date: Date = None,
+        commit_date: Date = None,
+        short: bool = True,
+    ) -> str:
+        return super().commit(msg, author_date, commit_date or author_date, short=short)
 
     def commit_content(
         self,
@@ -36,6 +42,7 @@ class Repo(Git):
         *,
         tag: str = None,
         branch: str = None,
+        short: bool = True,
     ) -> str:
         """
         Write new context based on the prefix and then commit it
@@ -45,7 +52,7 @@ class Repo(Git):
         if branch:
             self.branch(branch)
         (self.path / prefix).write_text(f'{prefix} content')
-        commit = self.commit('a commit', dt or self._clock.now())
+        commit = self.commit('a commit', dt or self._clock.now(), short=short)
         if tag:
             self.tag(tag)
         return commit
