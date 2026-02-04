@@ -3,6 +3,14 @@
 Changes
 =======
 
+0.3.0 (4 Feb 2026)
+------------------
+
+- General refresh.
+
+- Add ``short`` parameter to methods that return commit hashes,
+  allowing the full commit hash to be returned.
+
 0.2.0 (1 Oct 2021)
 ------------------
 
