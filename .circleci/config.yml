@@ -10,7 +10,6 @@ common: &common
         matrix:
           parameters:
             image:
-              - circleci/python:3.6
               - circleci/python:3.9
 
     - python/coverage:
