@@ -1,11 +1,10 @@
-
 giterator
 =========
 
-|CircleCI|_  |Docs|_
+|CI|_ |Docs|_
 
-.. |CircleCI| image:: https://circleci.com/gh/simplistix/giterator/tree/master.svg?style=shield
-.. _CircleCI: https://circleci.com/gh/simplistix/giterator/tree/master
+.. |CI| image:: https://github.com/simplistix/giterator/actions/workflows/ci.yml/badge.svg
+.. _CI: https://github.com/simplistix/giterator/actions/workflows/ci.yml
 
 .. |Docs| image:: https://readthedocs.org/projects/giterator/badge/?version=latest
 .. _Docs: http://giterator.readthedocs.org/en/latest/
