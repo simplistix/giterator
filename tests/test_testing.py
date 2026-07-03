@@ -45,6 +45,16 @@ class TestRepo:
         assert 'name = Foo' in config
         assert 'email = bar@example.com' in config
 
+    def test_clone_from_path(self, tmpdir: TempDirectory):
+        root = Path(tmpdir.path)
+        upstream = Repo.make(root / 'upstream')
+        upstream.commit_content('a')
+        clone = Repo.clone(upstream.path, root / 'clone')
+        config = (clone.path / '.git' / 'config').read_text()
+        assert 'name = Giterator' in config
+        assert 'email = giterator@example.com' in config
+        clone.commit_content('b')  # commits never depend on global git config
+
     def test_clone_non_testing(self, git: Git):
         (git.path / 'a').write_text('content')
         git.commit('a commit')

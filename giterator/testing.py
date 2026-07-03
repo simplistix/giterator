@@ -7,6 +7,9 @@ from .git import Git, User
 from .typing import Date
 
 
+DEFAULT_USER = User(name='Giterator', email='giterator@example.com')
+
+
 class Repo(Git):
     """
     A repo for use in automated tests.
@@ -23,7 +26,21 @@ class Repo(Git):
         in the repo. The user can be specified.
         """
         repo = cls(path)
-        repo.init(user or User(name='Giterator', email='giterator@example.com'))
+        repo.init(user or DEFAULT_USER)
+        return repo
+
+    @classmethod
+    def clone(cls, source: Union[str, Path, Git], path: Union[str, Path], user: User = None):
+        """
+        As :meth:`Git.clone`, but always ensures a user is configured in the
+        clone, so commits made in it never depend on the machine's global git
+        config. The user can be specified, and is otherwise inherited from a
+        :class:`Git` ``source``; failing both, the same default as :meth:`make`
+        is used.
+        """
+        repo = super().clone(source, path, user)
+        if repo._user is None:
+            repo._set_user(DEFAULT_USER)
         return repo
 
     def commit(
