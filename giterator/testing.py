@@ -8,6 +8,7 @@ from .typing import Date
 
 
 DEFAULT_USER = User(name='Giterator', email='giterator@example.com')
+DEFAULT_BRANCH = 'main'
 
 
 class Repo(Git):
@@ -20,13 +21,16 @@ class Repo(Git):
         self._clock = Clock()
 
     @classmethod
-    def make(cls, path: Union[Path, str], user: User = None) -> 'Repo':
+    def make(
+            cls, path: Union[Path, str], user: User = None, branch: str = DEFAULT_BRANCH
+    ) -> 'Repo':
         """
-        Make a repo at the path specified and ensure a user is configured
-        in the repo. The user can be specified.
+        Make a repo at the path specified and ensure a user and initial branch
+        name are configured in the repo, so neither depends on the git config
+        of the machine the tests are running on. Both can be specified.
         """
         repo = cls(path)
-        repo.init(user or DEFAULT_USER)
+        repo.init(user or DEFAULT_USER, branch)
         return repo
 
     @classmethod

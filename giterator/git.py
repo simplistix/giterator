@@ -67,16 +67,21 @@ class Git:
             self('config', 'user.name', user.name)
             self('config', 'user.email', user.email)
 
-    def init(self, user: User = None) -> None:
+    def init(self, user: User = None, branch: str = None) -> None:
         """
         Create an empty Git repository or reinitialize an existing one.
         If the path doesn't exist, it will be created. This includes any missing
         parent directories.
 
         :param user: The user to configure in the local repo.
+        :param branch: The name to use for the initial branch. If not specified,
+            the machine's git default is used.
         """
         makedirs(self.path, exist_ok=True)
-        self('init')
+        command = ['init']
+        if branch:
+            command.extend(['-b', branch])
+        self(*command)
         self._set_user(user)
 
     @classmethod

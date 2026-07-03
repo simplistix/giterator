@@ -34,6 +34,11 @@ class TestInit:
         assert b'name = Foo Bar' in config
         assert b'email = foo@example.com' in config
 
+    def test_init_with_branch(self, tmpdir: TempDirectory):
+        git = Git(tmpdir.getpath('foo'))
+        git.init(branch='trunk')
+        compare(git('symbolic-ref', 'HEAD'), expected='refs/heads/trunk\n')
+
 
 class TestClone:
 
