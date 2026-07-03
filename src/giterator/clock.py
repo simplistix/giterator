@@ -15,3 +15,4 @@ class Clock:
         now = self._now
         self._now = now + timedelta(seconds=self._current_delta)
         self._current_delta += 10
+        return now
