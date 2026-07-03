@@ -1,7 +1,7 @@
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Union, Dict, List, Optional, Type, TypeVar
+from typing import TypeVar
 
 from .typing import Date
 
@@ -32,15 +32,17 @@ class Git:
     :param path: The path to an existing work tree or local repo.
     """
 
-    _user: User = None
+    _user: User | None = None
 
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Path | str):
         if not isinstance(path, Path):
             path = Path(path)
         #: The path where this instance is located.
         self.path: Path = path
 
-    def __call__(self, *command, env: dict = None, cwd: Path = None) -> str:
+    def __call__(
+            self, *command: str, env: dict[str, str] | None = None, cwd: Path | None = None
+    ) -> str:
         """
         Run a git command in this repo. For example:
 
@@ -61,13 +63,13 @@ class Git:
 
     git = __call__
 
-    def _set_user(self, user: Optional[User]):
+    def _set_user(self, user: User | None) -> None:
         if user:
             self._user = user
             self('config', 'user.name', user.name)
             self('config', 'user.email', user.email)
 
-    def init(self, user: User = None, branch: str = None) -> None:
+    def init(self, user: User | None = None, branch: str | None = None) -> None:
         """
         Create an empty Git repository or reinitialize an existing one.
         If the path doesn't exist, it will be created. This includes any missing
@@ -86,10 +88,10 @@ class Git:
 
     @classmethod
     def clone(
-            cls: Type[GitType],
-            source: Union[str, Path, 'Git'],
-            path: Union[str, Path],
-            user: User = None,
+            cls: type[GitType],
+            source: "str | Path | Git",
+            path: str | Path,
+            user: User | None = None,
     ) -> GitType:
         """
         Clone the ``source`` repo to the ``path`` specified.
@@ -113,14 +115,14 @@ class Git:
         return git
 
     @staticmethod
-    def _coerce_date(dt):
+    def _coerce_date(dt: Date) -> str:
         return dt if isinstance(dt, str) else dt.isoformat()
 
     def commit(
             self,
             msg: str,
-            author_date: Date = None,
-            commit_date: Date = None,
+            author_date: Date | None = None,
+            commit_date: Date | None = None,
             short: bool = True,
     ) -> str:
         """
@@ -135,7 +137,7 @@ class Git:
         command = ['commit', '-m', msg]
         if author_date:
             command.extend(['--date', self._coerce_date(author_date)])
-        env = {}
+        env: dict[str, str] = {}
         if commit_date:
             env['GIT_COMMITTER_DATE'] = self._coerce_date(commit_date)
         self(*command, env=env)
@@ -154,13 +156,13 @@ class Git:
         """
         self('tag', name)
 
-    def tags(self) -> List[str]:
+    def tags(self) -> list[str]:
         """
         Return a list of tags in this repo.
         """
         return self('tag').split()
 
-    def tag_hashes(self) -> Dict[str, str]:
+    def tag_hashes(self) -> dict[str, str]:
         """
         Return a mapping of tag name to commit hash.
         """
@@ -172,13 +174,13 @@ class Git:
         """
         self('checkout', '-b', name)
 
-    def branches(self) -> List[str]:
+    def branches(self) -> list[str]:
         """
         Return a list of branches in this repo.
         """
         return self('for-each-ref', '--format', '%(refname:short)', 'refs/heads/').split()
 
-    def branch_hashes(self) -> Dict[str, str]:
+    def branch_hashes(self) -> dict[str, str]:
         """
         Return a mapping of branch name to commit hash.
         """

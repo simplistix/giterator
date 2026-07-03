@@ -3,10 +3,10 @@ from argparse import ArgumentParser, Namespace
 
 class Command:
 
-    def add_args(self, parser: ArgumentParser):
+    def add_args(self, parser: ArgumentParser) -> None:
         pass
 
-    def __call__(self, args: Namespace):
+    def __call__(self, args: Namespace) -> None:
         pass
 
 
@@ -30,6 +30,6 @@ def parse_args() -> Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
     args.command(args)

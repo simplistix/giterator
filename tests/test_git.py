@@ -10,7 +10,7 @@ from giterator.testing import Repo
 
 class TestCall:
 
-    def test_bad_command(self, git: Git):
+    def test_bad_command(self, git: Git) -> None:
         with ShouldRaise(GitError) as s:
             git('wut')
         assert str(s.raised).startswith("'git wut' gave return code 1:")
@@ -19,22 +19,22 @@ class TestCall:
 
 class TestInit:
 
-    def test_init(self, tmpdir: TempDirectory):
+    def test_init(self, tmpdir: TempDirectory) -> None:
         tmpdir.makedir('foo')
         Git(tmpdir.getpath('foo')).init()
         assert os.path.exists(tmpdir.getpath('foo/.git'))
 
-    def test_init_make_path(self, tmpdir):
+    def test_init_make_path(self, tmpdir: TempDirectory) -> None:
         Git(tmpdir.getpath('foo/bar')).init()
         assert os.path.exists(tmpdir.getpath('foo/bar/.git'))
 
-    def test_init_with_user(self, tmpdir: TempDirectory):
+    def test_init_with_user(self, tmpdir: TempDirectory) -> None:
         Git(tmpdir.getpath('foo')).init(User(name='Foo Bar', email='foo@example.com'))
         config = tmpdir.read('foo/.git/config')
         assert b'name = Foo Bar' in config
         assert b'email = foo@example.com' in config
 
-    def test_init_with_branch(self, tmpdir: TempDirectory):
+    def test_init_with_branch(self, tmpdir: TempDirectory) -> None:
         git = Git(tmpdir.getpath('foo'))
         git.init(branch='trunk')
         compare(git('symbolic-ref', 'HEAD'), expected='refs/heads/trunk\n')
@@ -42,7 +42,7 @@ class TestInit:
 
 class TestClone:
 
-    def test_minimal(self, repo: Repo, tmpdir: TempDirectory):
+    def test_minimal(self, repo: Repo, tmpdir: TempDirectory) -> None:
         hash = repo.commit_content('a')
         git = Git.clone(repo.path, tmpdir.getpath('clone'))
         commit, = git('log', '--format=%h').split()
@@ -57,7 +57,7 @@ class TestClone:
             'origin', str(repo.path), '(push)'
         ])
 
-    def test_with_user(self, repo: Repo, tmpdir: TempDirectory):
+    def test_with_user(self, repo: Repo, tmpdir: TempDirectory) -> None:
         repo.commit_content('a')
         git = Git.clone(
             repo.path, tmpdir.getpath('clone'), User(name='Foo Bar', email='foo@example.com')
@@ -66,7 +66,7 @@ class TestClone:
         assert 'name = Foo Bar' in config
         assert 'email = foo@example.com' in config
 
-    def test_repo(self, repo: Repo, tmpdir: TempDirectory):
+    def test_repo(self, repo: Repo, tmpdir: TempDirectory) -> None:
         repo.commit_content('a')
         source = Git(repo.path)
         git = Git.clone(source, tmpdir.getpath('clone'))
@@ -80,7 +80,7 @@ class TestClone:
 
 class TestCommit:
 
-    def test_from_empty(self, git: Git):
+    def test_from_empty(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         git.commit('a commit')
         compare(git.git('status', '-s'), expected='')
@@ -91,7 +91,7 @@ class TestCommit:
             ' 1 file changed, 1 insertion(+)\n'
         ))
 
-    def test_from_one_commit(self, git: Git):
+    def test_from_one_commit(self, git: Git) -> None:
         (git.path / 'a').write_text('a content')
         (git.path / 'b').write_text('b content')
         (git.path / 'c').write_text('c content')
@@ -117,17 +117,17 @@ class TestCommit:
             ' 3 files changed, 2 insertions(+), 2 deletions(-)\n'
         ))
 
-    def test_with_author_date(self, git: Git):
+    def test_with_author_date(self, git: Git) -> None:
         (git.path / 'content.txt').write_text('content')
         git.commit('commit', author_date=datetime(2000, 1, 1))
         compare(git('log', '--pretty=format:%ad'), expected='Sat Jan 1 00:00:00 2000 +0000')
 
-    def test_with_committer_date(self, git: Git):
+    def test_with_committer_date(self, git: Git) -> None:
         (git.path / 'content.txt').write_text('content')
         git.commit('commit', commit_date=datetime(2000, 1, 1))
         compare(git('log', '--pretty=format:%cd'), expected='Sat Jan 1 00:00:00 2000 +0000')
 
-    def test_with_dates_as_strings(self, git: Git):
+    def test_with_dates_as_strings(self, git: Git) -> None:
         (git.path / 'content.txt').write_text('content')
         git.commit('commit',
                    author_date='format:iso8601:'+datetime(2000, 1, 1).isoformat(),
@@ -135,14 +135,14 @@ class TestCommit:
         compare(git('log', '--pretty=format:%ad'), expected='Sat Jan 1 00:00:00 2000 +0000')
         compare(git('log', '--pretty=format:%cd'), expected='Sun Jan 2 00:00:00 2000 +0000')
 
-    def test_with_naive_datetime(self, git: Git):
+    def test_with_naive_datetime(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10)
         git.commit('a commit', dt, dt)
         compare(git('log', '--format=%aI %cI').replace("Z", "+00:00"),
                 expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n')
 
-    def test_with_tz_datetime(self, git: Git):
+    def test_with_tz_datetime(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10).astimezone(timezone.utc)
         git.commit('a commit', dt, dt)
@@ -152,45 +152,45 @@ class TestCommit:
 
 class TestLabels:
 
-    def test_rev_parse(self, repo: Repo):
+    def test_rev_parse(self, repo: Repo) -> None:
         repo.commit_content('a', datetime(2001, 1, 1, 10))
         compare(repo.rev_parse('HEAD'), expected='5ee580a')
 
-    def test_rev_parse_full(self, repo: Repo):
+    def test_rev_parse_full(self, repo: Repo) -> None:
         repo.commit_content('a', datetime(2001, 1, 1, 10))
         compare(repo.rev_parse('HEAD', short=False),
                 expected='5ee580aba98816af22cfa4e76ddf96bb3994964b')
 
-    def test_tags_empty(self, repo: Repo):
+    def test_tags_empty(self, repo: Repo) -> None:
         compare(repo.tags(), expected=[])
 
-    def test_tags(self, repo: Repo):
+    def test_tags(self, repo: Repo) -> None:
         repo.commit_content('a', tag='a-tag')
         repo.commit_content('b', tag='b-tag')
         compare(repo.tags(), expected=['a-tag', 'b-tag'])
 
-    def test_tag_hashes_empty(self, repo: Repo):
+    def test_tag_hashes_empty(self, repo: Repo) -> None:
         compare(repo.tag_hashes(), expected={})
 
-    def test_tag_hashes(self, repo: Repo):
+    def test_tag_hashes(self, repo: Repo) -> None:
         repo.commit_content('a', tag='a-tag')
         repo.commit_content('b', tag='b-tag')
         compare(repo.tag_hashes(),
                 expected={'a-tag': repo.rev_parse('a-tag'),
                           'b-tag': repo.rev_parse('b-tag')})
 
-    def test_branches_empty(self, repo: Repo):
+    def test_branches_empty(self, repo: Repo) -> None:
         compare(repo.branches(), expected=[])
 
-    def test_branch(self, repo: Repo):
+    def test_branch(self, repo: Repo) -> None:
         repo.commit_content('a', branch='a-branch')
         repo.commit_content('b', branch='b-branch')
         compare(repo.branches(), expected=['a-branch', 'b-branch'])
 
-    def test_branch_hashes_empty(self, repo: Repo):
+    def test_branch_hashes_empty(self, repo: Repo) -> None:
         compare(repo.branch_hashes(), expected={})
 
-    def test_branch_hashes(self, repo: Repo):
+    def test_branch_hashes(self, repo: Repo) -> None:
         repo.commit_content('a', branch='a-branch')
         repo.commit_content('b', branch='b-branch')
         compare(repo.branch_hashes(),

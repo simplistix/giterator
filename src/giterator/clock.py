@@ -7,7 +7,7 @@ class Clock:
     not uniformly.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._now = datetime(2001, 1, 1, 0).astimezone(timezone.utc)
         self._current_delta = 10
 

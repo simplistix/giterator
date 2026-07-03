@@ -1,6 +1,5 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Union
 
 from .clock import Clock
 from .git import Git, User
@@ -16,13 +15,13 @@ class Repo(Git):
     A repo for use in automated tests.
     """
 
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Path | str) -> None:
         super().__init__(path)
         self._clock = Clock()
 
     @classmethod
     def make(
-            cls, path: Union[Path, str], user: User = None, branch: str = DEFAULT_BRANCH
+            cls, path: Path | str, user: User | None = None, branch: str = DEFAULT_BRANCH
     ) -> 'Repo':
         """
         Make a repo at the path specified and ensure a user and initial branch
@@ -35,7 +34,7 @@ class Repo(Git):
 
     @classmethod
     def clone(
-            cls, source: Union[str, Path, Git], path: Union[str, Path], user: User = None
+            cls, source: str | Path | Git, path: str | Path, user: User | None = None
     ) -> 'Repo':
         """
         As :meth:`Git.clone`, but always ensures a user is configured in the
@@ -52,8 +51,8 @@ class Repo(Git):
     def commit(
         self,
         msg: str,
-        author_date: Date = None,
-        commit_date: Date = None,
+        author_date: Date | None = None,
+        commit_date: Date | None = None,
         short: bool = True,
     ) -> str:
         return super().commit(msg, author_date, commit_date or author_date, short=short)
@@ -61,10 +60,10 @@ class Repo(Git):
     def commit_content(
         self,
         prefix: str,
-        dt: datetime = None,
+        dt: datetime | None = None,
         *,
-        tag: str = None,
-        branch: str = None,
+        tag: str | None = None,
+        branch: str | None = None,
         short: bool = True,
     ) -> str:
         """
