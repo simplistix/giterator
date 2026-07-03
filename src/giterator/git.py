@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import TypeVar
+from typing import Self
 
 from .typing import Date
 
@@ -20,9 +22,6 @@ class GitError(Exception):
     """
     Something went wrong while running a git command.
     """
-
-
-GitType = TypeVar('GitType', bound='Git')
 
 
 class Git:
@@ -85,11 +84,11 @@ class Git:
 
     @classmethod
     def clone(
-        cls: type[GitType],
-        source: "str | Path | Git",
+        cls,
+        source: str | Path | Git,
         path: str | Path,
         user: User | None = None,
-    ) -> GitType:
+    ) -> Self:
         """
         Clone the ``source`` repo to the ``path`` specified.
 
