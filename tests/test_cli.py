@@ -17,11 +17,11 @@ def run() -> RunCLI:
         return subprocess.run(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors='replace'
         )
+
     return run
 
 
 class TestCLI:
-
     def test_no_command(self, run: RunCLI) -> None:
         result = run('')
         compare(result.returncode, expected=2, suffix=result.stdout)

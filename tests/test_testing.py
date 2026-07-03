@@ -15,7 +15,6 @@ def check_config_user(git: Git, name: str, email: str) -> None:
 
 
 class TestRepo:
-
     def test_commit_with_one_date(self, repo: Repo) -> None:
         (repo.path / 'content.txt').write_text('content')
         repo.commit('commit', datetime(2000, 1, 1))
@@ -35,7 +34,7 @@ class TestRepo:
         compare(repo.git('log', '--pretty=format:%cd'), expected='Sun Jan 2 00:00:00 2000 +0000')
 
     def test_make_default_branch_ignores_machine_config(
-            self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         config = tmp_path / 'gitconfig'
         config.write_text('[init]\n\tdefaultBranch = unexpected\n')
@@ -98,16 +97,17 @@ class TestRepo:
         git.commit('a commit')
         clone = Repo.clone(git, 'clone')
         assert isinstance(clone, Repo)
-        commit, = clone.git('log', '--format=%h').split()
-        compare(clone.git('show', '--pretty=format:%s', '--stat', commit), expected=(
-            'a commit\n'
-            ' a | 1 +\n'
-            ' 1 file changed, 1 insertion(+)\n'
-        ))
+        (commit,) = clone.git('log', '--format=%h').split()
+        compare(
+            clone.git('show', '--pretty=format:%s', '--stat', commit),
+            expected=('a commit\n a | 1 +\n 1 file changed, 1 insertion(+)\n'),
+        )
 
     def test_commit_content(self, repo: Repo) -> None:
         compare(repo.commit_content('a', datetime(2001, 1, 1, 10)), expected='5ee580a')
 
     def test_commit_content_full(self, repo: Repo) -> None:
-        compare(repo.commit_content('a', datetime(2001, 1, 1, 10), short=False),
-                expected='5ee580aba98816af22cfa4e76ddf96bb3994964b')
+        compare(
+            repo.commit_content('a', datetime(2001, 1, 1, 10), short=False),
+            expected='5ee580aba98816af22cfa4e76ddf96bb3994964b',
+        )

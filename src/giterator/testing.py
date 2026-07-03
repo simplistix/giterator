@@ -21,7 +21,7 @@ class Repo(Git):
 
     @classmethod
     def make(
-            cls, path: Path | str, user: User | None = None, branch: str = DEFAULT_BRANCH
+        cls, path: Path | str, user: User | None = None, branch: str = DEFAULT_BRANCH
     ) -> 'Repo':
         """
         Make a repo at the path specified and ensure a user and initial branch
@@ -33,9 +33,7 @@ class Repo(Git):
         return repo
 
     @classmethod
-    def clone(
-            cls, source: str | Path | Git, path: str | Path, user: User | None = None
-    ) -> 'Repo':
+    def clone(cls, source: str | Path | Git, path: str | Path, user: User | None = None) -> 'Repo':
         """
         As :meth:`Git.clone`, but always ensures a user is configured in the
         clone, so commits made in it never depend on the machine's global git

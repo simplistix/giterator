@@ -2,7 +2,6 @@ from argparse import ArgumentParser, Namespace
 
 
 class Command:
-
     def add_args(self, parser: ArgumentParser) -> None:
         pass
 

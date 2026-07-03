@@ -10,7 +10,9 @@ from giterator.testing import Repo
 
 
 # Enable coverage for subprocesses (CLI tests)
-os.environ.setdefault('COVERAGE_PROCESS_START', str(Path(__file__).parent.parent / 'pyproject.toml'))
+os.environ.setdefault(
+    'COVERAGE_PROCESS_START', str(Path(__file__).parent.parent / 'pyproject.toml')
+)
 
 
 @pytest.fixture()

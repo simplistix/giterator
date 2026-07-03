@@ -41,7 +41,7 @@ class Git:
         self.path: Path = path
 
     def __call__(
-            self, *command: str, env: dict[str, str] | None = None, cwd: Path | None = None
+        self, *command: str, env: dict[str, str] | None = None, cwd: Path | None = None
     ) -> str:
         """
         Run a git command in this repo. For example:
@@ -51,13 +51,10 @@ class Git:
             Git(...)('log', '-1')
         """
         try:
-            output = check_output(
-                ('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=env
-            )
+            output = check_output(('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=env)
         except CalledProcessError as e:
             raise GitError(
-                f"{' '.join(e.cmd)!r} gave return code {e.returncode}:\n\n"
-                f"{e.output.decode()}\n\n"
+                f"{' '.join(e.cmd)!r} gave return code {e.returncode}:\n\n{e.output.decode()}\n\n"
             ) from None
         return output.decode()
 
@@ -88,10 +85,10 @@ class Git:
 
     @classmethod
     def clone(
-            cls: type[GitType],
-            source: "str | Path | Git",
-            path: str | Path,
-            user: User | None = None,
+        cls: type[GitType],
+        source: "str | Path | Git",
+        path: str | Path,
+        user: User | None = None,
     ) -> GitType:
         """
         Clone the ``source`` repo to the ``path`` specified.
@@ -119,11 +116,11 @@ class Git:
         return dt if isinstance(dt, str) else dt.isoformat()
 
     def commit(
-            self,
-            msg: str,
-            author_date: Date | None = None,
-            commit_date: Date | None = None,
-            short: bool = True,
+        self,
+        msg: str,
+        author_date: Date | None = None,
+        commit_date: Date | None = None,
+        short: bool = True,
     ) -> str:
         """
         Commit changes in this repo, including and new or deleted files.
