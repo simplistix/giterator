@@ -1,7 +1,7 @@
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Optional, Type, TypeVar
 
 from .typing import Date
 
@@ -20,6 +20,9 @@ class GitError(Exception):
     """
     Something went wrong while running a git command.
     """
+
+
+GitType = TypeVar('GitType', bound='Git')
 
 
 class Git:
@@ -77,7 +80,23 @@ class Git:
         self._set_user(user)
 
     @classmethod
-    def clone(cls, source: Union[str, Path, 'Git'], path: Union[str, Path], user: User = None):
+    def clone(
+            cls: Type[GitType],
+            source: Union[str, Path, 'Git'],
+            path: Union[str, Path],
+            user: User = None,
+    ) -> GitType:
+        """
+        Clone the ``source`` repo to the ``path`` specified.
+
+        :param source: The repo to clone, either as a path or a :class:`Git` instance.
+        :param path: Where to clone to. Relative paths are resolved relative to the
+            parent of ``source``.
+        :param user: The user to configure in the local clone. If not specified and
+            ``source`` is a :class:`Git` instance, the user from ``source``, if any,
+            is configured. Otherwise, no user is configured and commits in the clone
+            will depend on git's normal identity discovery.
+        """
         if isinstance(source, Git):
             user = user or source._user
             source = source.path

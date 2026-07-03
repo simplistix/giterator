@@ -20,7 +20,7 @@ class Repo(Git):
         self._clock = Clock()
 
     @classmethod
-    def make(cls, path: Union[Path, str], user: User = None):
+    def make(cls, path: Union[Path, str], user: User = None) -> 'Repo':
         """
         Make a repo at the path specified and ensure a user is configured
         in the repo. The user can be specified.
@@ -30,7 +30,9 @@ class Repo(Git):
         return repo
 
     @classmethod
-    def clone(cls, source: Union[str, Path, Git], path: Union[str, Path], user: User = None):
+    def clone(
+            cls, source: Union[str, Path, Git], path: Union[str, Path], user: User = None
+    ) -> 'Repo':
         """
         As :meth:`Git.clone`, but always ensures a user is configured in the
         clone, so commits made in it never depend on the machine's global git
