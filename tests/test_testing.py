@@ -1,17 +1,19 @@
+import re
 from datetime import datetime
 from pathlib import Path
 
 import pytest
-from testfixtures import compare, TempDirectory
+from testfixtures import compare, StringComparison, TempDirectory
 
 from giterator import Git, User
 from giterator.testing import Repo
 
 
 def check_config_user(git: Git, name: str, email: str) -> None:
-    config = (git.path / '.git' / 'config').read_text()
-    assert f'name = {name}' in config
-    assert f'email = {email}' in config
+    compare(
+        (git.path / '.git' / 'config').read_text(),
+        expected=StringComparison(rf'(?s).*name = {re.escape(name)}.*email = {re.escape(email)}.*'),
+    )
 
 
 class TestRepo:

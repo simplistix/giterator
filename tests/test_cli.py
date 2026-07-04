@@ -3,7 +3,7 @@ import sys
 from collections.abc import Callable
 
 import pytest
-from testfixtures import compare
+from testfixtures import compare, StringComparison
 
 RunCLI = Callable[[str], 'subprocess.CompletedProcess[str]']
 
@@ -25,16 +25,21 @@ class TestCLI:
     def test_no_command(self, run: RunCLI) -> None:
         result = run('')
         compare(result.returncode, expected=2, suffix=result.stdout)
-        assert 'error: the following arguments are required: command' in result.stdout
+        compare(
+            result.stdout,
+            expected=StringComparison(
+                r'(?s).*error: the following arguments are required: command.*'
+            ),
+        )
 
     def test_pack(self, run: RunCLI) -> None:
         # stub for coverage
         result = run('pack')
         compare(result.returncode, expected=0, suffix=result.stdout)
-        assert not result.stdout
+        compare(result.stdout, expected='')
 
     def test_unpack(self, run: RunCLI) -> None:
         # stub for coverage
         result = run('pack')
         compare(result.returncode, expected=0, suffix=result.stdout)
-        assert not result.stdout
+        compare(result.stdout, expected='')

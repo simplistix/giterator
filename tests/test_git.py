@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 
-from testfixtures import TempDirectory, compare, ShouldRaise
+from testfixtures import TempDirectory, compare, ShouldRaise, StringComparison
 
 from giterator import Git, User
 from giterator.git import GitError
@@ -12,8 +12,12 @@ class TestCall:
     def test_bad_command(self, git: Git) -> None:
         with ShouldRaise(GitError) as s:
             git('wut')
-        assert str(s.raised).startswith("'git wut' gave return code 1:")
-        assert "git: 'wut' is not a git command" in str(s.raised)
+        compare(
+            str(s.raised),
+            expected=StringComparison(
+                r"(?s)'git wut' gave return code 1:.*git: 'wut' is not a git command.*"
+            ),
+        )
 
 
 class TestInit:
@@ -28,9 +32,11 @@ class TestInit:
 
     def test_init_with_user(self, tmpdir: TempDirectory) -> None:
         Git(tmpdir.getpath('foo')).init(User(name='Foo Bar', email='foo@example.com'))
-        config = tmpdir.read('foo/.git/config')
-        assert b'name = Foo Bar' in config
-        assert b'email = foo@example.com' in config
+        config = tmpdir.read('foo/.git/config', encoding='utf-8')
+        compare(
+            config,
+            expected=StringComparison(r'(?s).*name = Foo Bar.*email = foo@example\.com.*'),
+        )
 
     def test_init_with_branch(self, tmpdir: TempDirectory) -> None:
         git = Git(tmpdir.getpath('foo'))
@@ -59,8 +65,10 @@ class TestClone:
             repo.path, tmpdir.getpath('clone'), User(name='Foo Bar', email='foo@example.com')
         )
         config = (git.path / '.git' / 'config').read_text()
-        assert 'name = Foo Bar' in config
-        assert 'email = foo@example.com' in config
+        compare(
+            config,
+            expected=StringComparison(r'(?s).*name = Foo Bar.*email = foo@example\.com.*'),
+        )
 
     def test_repo(self, repo: Repo, tmpdir: TempDirectory) -> None:
         repo.commit_content('a')
