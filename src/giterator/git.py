@@ -120,6 +120,7 @@ class Git:
         author_date: Date | None = None,
         commit_date: Date | None = None,
         short: bool = True,
+        allow_empty: bool = False,
     ) -> str:
         """
         Commit changes in this repo, including and new or deleted files.
@@ -128,9 +129,12 @@ class Git:
         :param author_date: The author date.
         :param commit_date: The commit date. Defaults to author date if not specified.
         :param short: Return the short commit hash instead of the full 40-character hash.
+        :param allow_empty: Allow a commit to be made even when there are no changes.
         """
         self('add', '.')
         command = ['commit', '-m', msg]
+        if allow_empty:
+            command.append('--allow-empty')
         if author_date:
             command.extend(['--date', self._coerce_date(author_date)])
         env: dict[str, str] = {}

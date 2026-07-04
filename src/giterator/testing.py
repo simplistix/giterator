@@ -51,8 +51,11 @@ class Repo(Git):
         author_date: Date | None = None,
         commit_date: Date | None = None,
         short: bool = True,
+        allow_empty: bool = False,
     ) -> str:
-        return super().commit(msg, author_date, commit_date or author_date, short=short)
+        return super().commit(
+            msg, author_date, commit_date or author_date, short=short, allow_empty=allow_empty
+        )
 
     def commit_content(
         self,

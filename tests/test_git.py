@@ -149,6 +149,22 @@ class TestCommit:
             expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n',
         )
 
+    def test_nothing_to_commit(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('commit 1')
+        with ShouldRaise(GitError) as s:
+            git.commit('commit 2')
+        compare(
+            str(s.raised),
+            expected=StringComparison(r'(?s).*gave return code 1:.*nothing to commit.*'),
+        )
+
+    def test_nothing_to_commit_allow_empty(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('commit 1')
+        git.commit('commit 2', allow_empty=True)
+        compare(git('log', '--reverse', '--format=%s'), expected='commit 1\ncommit 2\n')
+
     def test_with_tz_datetime(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10).astimezone(timezone.utc)
