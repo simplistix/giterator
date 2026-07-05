@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 from testfixtures import TempDirectory, compare, ShouldRaise, StringComparison
@@ -80,6 +81,15 @@ class TestClone:
             git('show', '--pretty=format:%s', '--stat', commit),
             expected=('a commit\n a | 1 +\n 1 file changed, 1 insertion(+)\n'),
         )
+
+    def test_relative_source(self) -> None:
+        with TempDirectory(cwd=True):
+            upstream = Repo.make(Path('path') / 'to' / 'repo')
+            hash = upstream.commit_content('a')
+            git = Git.clone(Path('path') / 'to' / 'repo', 'clone')
+            compare(git.path, expected=Path('path', 'to', 'clone').resolve())
+            (commit,) = git('log', '--format=%h').split()
+            compare(hash, expected=commit)
 
 
 class TestCommit:

@@ -138,7 +138,7 @@ class Git:
         if isinstance(source, Git):
             user = user or source._user
             source = source.path
-        source = Path(source)
+        source = Path(source).absolute()
         dest = source.parent.joinpath(Path(path)).absolute()
         git = cls(dest)
         git('clone', str(source), str(git.path), cwd=source.parent)
