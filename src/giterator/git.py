@@ -162,7 +162,8 @@ class Git:
 
         :param msg: The commit message.
         :param author_date: The author date.
-        :param commit_date: The commit date. Defaults to author date if not specified.
+        :param commit_date: The commit date. If not specified, git's own default
+            is used, which is the current time rather than ``author_date``.
         :param short: Return the short commit hash instead of the full 40-character hash.
         :param allow_empty: Allow a commit to be made even when there are no changes.
         """
@@ -179,6 +180,12 @@ class Git:
         return self.rev_parse('HEAD', short)
 
     def rev_parse(self, label: str, short: bool = True) -> str:
+        """
+        Return the commit hash that ``label`` refers to.
+
+        :param label: A branch, tag, or other revision that ``git rev-parse`` accepts.
+        :param short: Return the short commit hash instead of the full 40-character hash.
+        """
         command = ['rev-parse', '--verify', '-q']
         if short:
             command.append('--short')

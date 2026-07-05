@@ -6,6 +6,7 @@ __all__ = [
     'Git',
     'User',
     'Commit',
+    'GitError',
     'Every',
     'daily',
     'Giteration',

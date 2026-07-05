@@ -53,6 +53,11 @@ class Repo(Git):
         short: bool = True,
         allow_empty: bool = False,
     ) -> str:
+        """
+        As :meth:`Git.commit`, but ``commit_date`` defaults to ``author_date``
+        when not given, so commits made in tests have deterministic dates
+        instead of depending on the current time.
+        """
         return super().commit(
             msg, author_date, commit_date or author_date, short=short, allow_empty=allow_empty
         )

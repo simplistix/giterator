@@ -13,18 +13,80 @@ with any tools for managing Python environments.
 __ https://pypi.org
 
 
-Examining history
-~~~~~~~~~~~~~~~~~
+Normal use
+~~~~~~~~~~
 
-The :meth:`Git.log` method returns the commits in a repository as
-:class:`Commit` instances, giving structured access to the hash, author,
-committer, dates and full message of each commit:
+:class:`Git` wraps the command-line ``git`` tool, giving common repository
+operations a typed Python method instead of a shell command assembled by
+hand. Point it at an existing work tree, or create one with :meth:`Git.init`:
 
 .. code-block:: python
 
-    from giterator import Git
+    from giterator import Git, User
 
-    for commit in Git('path/to/repo').log('--reverse'):
+    repo = Git('path/to/repo')
+    repo.init(User('Alice', 'alice@example.com'))
+
+Any git subcommand that doesn't have a dedicated method can still be run
+directly; calling a :class:`Git` instance (or its :meth:`~Git.git` alias)
+runs ``git`` in the work tree and returns its output as a string:
+
+.. code-block:: python
+
+    repo.git('remote', 'add', 'origin', 'git@example.com:some/repo.git')
+
+If the command fails, a :class:`GitError` is raised carrying git's own
+output:
+
+.. code-block:: python
+
+    from giterator import GitError
+
+    try:
+        repo.git('merge', 'no-such-branch')
+    except GitError as e:
+        print(e)
+
+:meth:`Git.commit` stages everything in the work tree, including new and
+deleted files, and commits it, optionally backdating the author and
+committer:
+
+.. code-block:: python
+
+    from datetime import datetime
+
+    (repo.path / 'README.rst').write_text('hello')
+    repo.commit('add readme', author_date=datetime(2020, 1, 1))
+
+:meth:`Git.clone` clones a repo. When the source is a :class:`Git` instance
+with a user configured, that user is carried over to the clone unless a
+different one is given:
+
+.. code-block:: python
+
+    clone = Git.clone(repo, 'path/to/clone')
+
+Branches and tags are created and listed with :meth:`Git.branch`,
+:meth:`Git.branches`, :meth:`Git.tag` and :meth:`Git.tags`, and their commit
+hashes looked up with :meth:`Git.branch_hashes` and :meth:`Git.tag_hashes`:
+
+.. code-block:: python
+
+    repo.branch('feature')
+    repo.tag('v1.0')
+    print(repo.branches(), repo.tag_hashes())
+
+
+Examining history
+~~~~~~~~~~~~~~~~~~
+
+:meth:`Git.log` returns the commits in a repository as :class:`Commit`
+instances, giving structured access to the hash, author, committer, dates
+and full message of each commit:
+
+.. code-block:: python
+
+    for commit in repo.log('--reverse'):
         print(commit.committer_date, commit.rev, commit.message)
 
 Any options, revision ranges or paths accepted by ``git log`` can be passed
@@ -61,13 +123,10 @@ first commit, but ``start`` can be used to begin somewhere else.
 When no schedule is given, a snapshot is yielded for every commit, with the
 time of each snapshot being the date of its commit.
 
-
-Writing snapshots as commits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 The :func:`write` function does the reverse, turning a series of snapshots
-into commits in a repository. This is useful when you have dated copies of a
-project, such as backups, that you would like to turn into version history:
+into commits in a repository, which is useful when you have dated copies of
+a project, such as backups, that you would like to turn into version
+history:
 
 .. code-block:: python
 
@@ -81,8 +140,8 @@ project, such as backups, that you would like to turn into version history:
 
 If the target repository does not already exist, it is created. The content
 of each :class:`Giteration` replaces the content of the repository's work
-tree and is committed using its ``at`` date for both the author and committer
-dates.
+tree and is committed using its ``at`` date for both the author and
+committer dates.
 
 Since :func:`read` yields :class:`Giteration` instances and :func:`write`
 accepts them, the two can be combined to resample a repository's history,
@@ -95,36 +154,99 @@ here as it stood at 4pm each day. Commit messages are preserved, as
 
     write('path/to/resampled', read('path/to/repo', daily.at(16, 0)))
 
-
-Command line use
-~~~~~~~~~~~~~~~~
-
-The ``giterator`` command line tool packs dated files into a repository and
-unpacks a repository into dated files. Both commands take a mapping of a
-source to a target, separated by a colon.
-
-``pack`` looks for files matching a :meth:`~datetime.datetime.strftime`
-pattern, parses the date out of each file's name, and commits them to the
-repository, oldest first, under the name on the right of the mapping:
+The ``giterator`` command line tool builds on the same read/write model to
+move between dated files and commits. ``pack`` looks for files matching a
+:meth:`~datetime.datetime.strftime` pattern, parses the date out of each
+file's name, and commits them oldest first under the name on the right of
+the mapping:
 
 .. code-block:: bash
 
     giterator pack --repo path/to/repo 'downloads/foo-%Y-%m-%d.csv:foo.csv'
 
-If the repository does not already exist, it is created. Files that match
-the shape of the pattern but do not contain a valid date are ignored, and
-any other content already in the repository is left alone.
-
-``unpack`` does the reverse. For each commit in the repository, files
-matching the glob pattern on the left of the mapping are copied to the path
-produced by formatting the commit's date with the pattern on the right:
+``unpack`` does the reverse, copying files matching the glob pattern on the
+left of the mapping to the path produced by formatting each commit's date
+with the pattern on the right:
 
 .. code-block:: bash
 
     giterator unpack --repo path/to/repo '*.csv:downloads/foo-%Y-%m-%d.csv'
 
-Any directories needed for the target files are created, and existing files
-are overwritten.
+If any of the paths involved contain a colon, ``--sep`` changes the
+separator used in the mapping.
 
-If any of the paths involved contain a colon, ``--sep`` can be used to
-change the separator used in the mapping.
+
+Testing
+~~~~~~~
+
+:class:`~giterator.testing.Repo` is a :class:`Git` subclass built for use in
+automated tests. It configures a user and initial branch name that don't
+depend on the git configuration of the machine running the tests, so the
+same test behaves the same way in every environment, including CI.
+
+The usual pattern is a pytest fixture that makes a fresh repo in a temporary
+directory for each test:
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    import pytest
+    from giterator.testing import Repo
+
+
+    @pytest.fixture()
+    def repo(tmp_path: Path) -> Repo:
+        return Repo.make(tmp_path / 'repo')
+
+
+    def test_something(repo: Repo) -> None:
+        repo.commit_content('data')
+        commit = repo.log()[0]
+        assert commit.message == 'a commit'
+
+:meth:`~Repo.make` is the usual way to create a :class:`~giterator.testing.Repo`.
+A :class:`User` and branch name can be given if the defaults, ``Giterator
+<giterator@example.com>`` and ``main``, don't suit a particular test:
+
+.. code-block:: python
+
+    from giterator import User
+
+    repo = Repo.make(
+        tmp_path / 'repo', user=User('Alice', 'alice@example.com'), branch='trunk'
+    )
+
+:meth:`~Repo.clone` works like :meth:`Git.clone`, but ensures the clone
+always has a user configured, even when the source has none, falling back
+to the same default as :meth:`~Repo.make`:
+
+.. code-block:: python
+
+    clone = Repo.clone(repo, tmp_path / 'clone')
+
+:meth:`~Repo.commit` works like :meth:`Git.commit`, but only needs one date:
+when ``commit_date`` is omitted, it defaults to ``author_date`` instead of
+the current time, so commits made in a test have dates you actually
+specified:
+
+.. code-block:: python
+
+    from datetime import datetime
+
+    (repo.path / 'content.txt').write_text('content')
+    repo.commit('a commit', datetime(2020, 1, 1))
+
+:meth:`~Repo.commit_content` is a shortcut for the common case of writing a
+file and committing it in one step, optionally on a new branch or tagging
+the result:
+
+.. code-block:: python
+
+    repo.commit_content('data', tag='v1.0')
+    repo.commit_content('other', branch='feature')
+
+Each call writes a file named after ``prefix`` containing some content
+derived from it, then commits it. When no datetime is given, each commit
+gets an automatically increasing timestamp, so a test can create several
+commits in sequence without needing to invent dates by hand.
