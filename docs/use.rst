@@ -13,6 +13,24 @@ with any tools for managing Python environments.
 __ https://pypi.org
 
 
+Examining history
+~~~~~~~~~~~~~~~~~
+
+The :meth:`Git.log` method returns the commits in a repository as
+:class:`Commit` instances, giving structured access to the hash, author,
+committer, dates and full message of each commit:
+
+.. code-block:: python
+
+    from giterator import Git
+
+    for commit in Git('path/to/repo').log('--reverse'):
+        print(commit.committer_date, commit.rev, commit.message)
+
+Any options, revision ranges or paths accepted by ``git log`` can be passed
+as strings, as with ``--reverse`` above.
+
+
 Iterating over history
 ~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
@@ -8,14 +10,39 @@ from typing import Self
 from .typing import Date
 
 
+@dataclass
 class User:
     """
     Represents a git user, for configuring a repo.
     """
 
-    def __init__(self, name: str, email: str):
-        self.name = name
-        self.email = email
+    #: The name of the user.
+    name: str
+    #: The email address of the user.
+    email: str
+
+
+@dataclass
+class Commit:
+    """
+    A commit from the log of a repo.
+    """
+
+    #: The short hash of the commit.
+    rev: str
+    #: The author of the commit.
+    author: User
+    #: The author date of the commit.
+    author_date: datetime
+    #: The committer of the commit.
+    committer: User
+    #: The committer date of the commit.
+    committer_date: datetime
+    #: The full commit message, without any trailing newlines.
+    message: str
+
+
+LOG_FORMAT = '%x00'.join(('%h', '%an', '%ae', '%aI', '%cn', '%ce', '%cI', '%B')) + '%x00'
 
 
 class GitError(Exception):
@@ -149,6 +176,40 @@ class Git:
             command.append('--short')
         command.append(label)
         return self(*command).strip()
+
+    def log(self, *options: str) -> list[Commit]:
+        """
+        Return the commits in this repo as a list of :class:`Commit`
+        instances, most recent first.
+
+        :param options: Any options, revision ranges or paths that
+            ``git log`` accepts.
+        """
+        commits = []
+        for record in self('log', '--format=' + LOG_FORMAT, *options).split('\x00\n'):
+            if not record:
+                continue
+            (
+                rev,
+                author_name,
+                author_email,
+                author_date,
+                committer_name,
+                committer_email,
+                committer_date,
+                message,
+            ) = record.split('\x00')
+            commits.append(
+                Commit(
+                    rev=rev,
+                    author=User(author_name, author_email),
+                    author_date=datetime.fromisoformat(author_date),
+                    committer=User(committer_name, committer_email),
+                    committer_date=datetime.fromisoformat(committer_date),
+                    message=message.rstrip('\n'),
+                )
+            )
+        return commits
 
     def tag(self, name: str) -> None:
         """

@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 
 from testfixtures import TempDirectory, compare, ShouldRaise, StringComparison
 
-from giterator import Git, User
+from giterator import Commit, Git, User
 from giterator.git import GitError
-from giterator.testing import Repo
+from giterator.testing import DEFAULT_USER, Repo
 
 
 class TestCall:
@@ -177,6 +177,59 @@ class TestCommit:
         compare(
             git('log', '--format=%aI %cI').replace("Z", "+00:00"),
             expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n',
+        )
+
+
+class TestLog:
+    def test_empty_repo(self, repo: Repo) -> None:
+        with ShouldRaise(GitError):
+            repo.log()
+
+    def test_commits(self, repo: Repo) -> None:
+        rev_1 = repo.commit_content('a', datetime(2001, 1, 1, 10, tzinfo=timezone.utc))
+        rev_2 = repo.commit_content('b', datetime(2001, 1, 2, 12, tzinfo=timezone.utc))
+        compare(
+            repo.log(),
+            expected=[
+                Commit(
+                    rev=rev_2,
+                    author=DEFAULT_USER,
+                    author_date=datetime(2001, 1, 2, 12, tzinfo=timezone.utc),
+                    committer=DEFAULT_USER,
+                    committer_date=datetime(2001, 1, 2, 12, tzinfo=timezone.utc),
+                    message='a commit',
+                ),
+                Commit(
+                    rev=rev_1,
+                    author=DEFAULT_USER,
+                    author_date=datetime(2001, 1, 1, 10, tzinfo=timezone.utc),
+                    committer=DEFAULT_USER,
+                    committer_date=datetime(2001, 1, 1, 10, tzinfo=timezone.utc),
+                    message='a commit',
+                ),
+            ],
+        )
+
+    def test_options(self, repo: Repo) -> None:
+        rev_1 = repo.commit_content('a', datetime(2001, 1, 1, 10, tzinfo=timezone.utc))
+        rev_2 = repo.commit_content('b', datetime(2001, 1, 2, 12, tzinfo=timezone.utc))
+        compare(
+            [commit.rev for commit in repo.log('--reverse')],
+            expected=[rev_1, rev_2],
+        )
+        compare(
+            [commit.rev for commit in repo.log('-1')],
+            expected=[rev_2],
+        )
+
+    def test_multi_line_message(self, git: Git) -> None:
+        (git.path / 'a').write_text('a content')
+        git.commit('subject\n\nbody line 1\nbody line 2', datetime(2001, 1, 1))
+        (git.path / 'b').write_text('b content')
+        git.commit('another commit', datetime(2001, 1, 2))
+        compare(
+            [commit.message for commit in git.log()],
+            expected=['another commit', 'subject\n\nbody line 1\nbody line 2'],
         )
 
 
