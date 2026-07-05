@@ -149,6 +149,11 @@ class TestCommit:
             expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n',
         )
 
+    def test_multi_line_message(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('subject\n\nbody line 1\nbody line 2')
+        compare(git('log', '--format=%B'), expected='subject\n\nbody line 1\nbody line 2\n\n')
+
     def test_nothing_to_commit(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         git.commit('commit 1')
