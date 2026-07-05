@@ -284,12 +284,12 @@ directory for each test:
     repo = Repo.make(tmp_path / 'sample')
 
 As ``test_something`` shows, :meth:`~giterator.testing.Repo.commit_content`
-makes a commit in a single call: it writes a file named after the prefix
-given, containing content derived from it, and commits with an
+makes a commit in a single call: it writes a file, defaulting to
+``sample.txt`` with content derived from its name, and commits with an
 automatically increasing timestamp, so a test can create a string of
-commits without inventing file content or dates by hand. When a test does
-care about those, a specific datetime can be given, and the commit can be
-placed on a new branch or tagged:
+commits without inventing a file name, content, or dates by hand. When a
+test does care about those, or about the commit message, they can all be
+given, and the commit can be placed on a new branch or tagged:
 
 .. code-block:: python
 
@@ -297,13 +297,15 @@ placed on a new branch or tagged:
 
     repo.commit_content('a')
     repo.commit_content('b', datetime(2021, 6, 1))
-    repo.commit_content('c', tag='v1.0')
-    repo.commit_content('d', branch='feature')
+    repo.commit_content('c', content='some specific content')
+    repo.commit_content('d', message='a specific message')
+    repo.commit_content('e', tag='v1.0')
+    repo.commit_content('f', branch='feature')
 
 That leaves the work tree with one file per call:
 
 >>> sorted(path.name for path in repo.path.iterdir())
-['.git', 'a', 'b', 'c', 'd']
+['.git', 'a', 'b', 'c', 'd', 'e', 'f']
 
 :meth:`~giterator.testing.Repo.make` is the usual way to create a
 :class:`~giterator.testing.Repo`.

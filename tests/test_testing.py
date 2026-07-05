@@ -110,3 +110,13 @@ class TestRepo:
             repo.commit_content('a', datetime(2001, 1, 1, 10), short=False),
             expected='5ee580aba98816af22cfa4e76ddf96bb3994964b',
         )
+
+    def test_commit_content_defaults(self, repo: Repo) -> None:
+        repo.commit_content()
+        compare((repo.path / 'sample.txt').read_text(), expected='sample.txt content')
+        compare(repo.log()[0].message, expected='a commit')
+
+    def test_commit_content_explicit_content_and_message(self, repo: Repo) -> None:
+        repo.commit_content('a', content='specific content', message='specific message')
+        compare((repo.path / 'a').read_text(), expected='specific content')
+        compare(repo.log()[0].message, expected='specific message')

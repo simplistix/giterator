@@ -64,31 +64,34 @@ class Repo(Git):
 
     def commit_content(
         self,
-        prefix: str,
+        name: str = 'sample.txt',
         dt: datetime | None = None,
         *,
+        content: str | None = None,
+        message: str = 'a commit',
         tag: str | None = None,
         branch: str | None = None,
         short: bool = True,
     ) -> str:
         """
-        Make a commit in a single call: write a file named after ``prefix``,
-        containing content derived from it, and commit it with the message
-        ``'a commit'``.
+        Make a commit in a single call: write a file and commit it.
 
-        :param prefix: The name of the file to write, and the basis of its content.
+        :param name: The name of the file to write.
         :param dt: The datetime to use for both the author and commit dates.
             When not given, each commit uses the next point in a deterministic
             sequence of increasing datetimes, so tests never depend on the
             current time.
+        :param content: The content to write to the file. Defaults to content
+            derived from ``name``.
+        :param message: The commit message to use.
         :param tag: A tag to create at the new commit.
         :param branch: A branch to create and check out before committing.
         :param short: Return the short commit hash instead of the full 40-character hash.
         """
         if branch:
             self.branch(branch)
-        (self.path / prefix).write_text(f'{prefix} content')
-        commit = self.commit('a commit', dt or self._clock.now(), short=short)
+        (self.path / name).write_text(content if content is not None else f'{name} content')
+        commit = self.commit(message, dt or self._clock.now(), short=short)
         if tag:
             self.tag(tag)
         return commit
