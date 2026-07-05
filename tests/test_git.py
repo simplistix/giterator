@@ -2,8 +2,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
-from testfixtures import TempDirectory, compare, ShouldRaise, StringComparison
+from testfixtures import Replacer, TempDirectory, compare, ShouldRaise, StringComparison
 
 from giterator import Commit, Git, User
 from giterator.git import GitError
@@ -165,22 +164,21 @@ class TestCommit:
         git.commit('subject\n\nbody line 1\nbody line 2')
         compare(git('log', '--format=%B'), expected='subject\n\nbody line 1\nbody line 2\n\n')
 
-    def test_identity_from_environment(
-        self, tmpdir: TempDirectory, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_identity_from_environment(self, tmpdir: TempDirectory) -> None:
         # Only environment variables carry identity here, no repo-local
         # user.name/email and no reliance on the machine's global git config,
         # so this fails unless env is merged with the process environment
         # rather than replacing it for the internal 'git commit' call.
-        monkeypatch.setenv('GIT_AUTHOR_NAME', 'Env Author')
-        monkeypatch.setenv('GIT_AUTHOR_EMAIL', 'env@example.com')
-        monkeypatch.setenv('GIT_COMMITTER_NAME', 'Env Author')
-        monkeypatch.setenv('GIT_COMMITTER_EMAIL', 'env@example.com')
-        git = Git(tmpdir.getpath('env-repo'))
-        git.init()
-        (git.path / 'a').write_text('content')
-        git.commit('a commit', commit_date=datetime(2000, 1, 1))
-        compare(git('log', '--format=%an <%ae>'), expected='Env Author <env@example.com>\n')
+        with Replacer() as replace:
+            replace.in_environ('GIT_AUTHOR_NAME', 'Env Author')
+            replace.in_environ('GIT_AUTHOR_EMAIL', 'env@example.com')
+            replace.in_environ('GIT_COMMITTER_NAME', 'Env Author')
+            replace.in_environ('GIT_COMMITTER_EMAIL', 'env@example.com')
+            git = Git(tmpdir.getpath('env-repo'))
+            git.init()
+            (git.path / 'a').write_text('content')
+            git.commit('a commit', commit_date=datetime(2000, 1, 1))
+            compare(git('log', '--format=%an <%ae>'), expected='Env Author <env@example.com>\n')
 
     def test_nothing_to_commit(self, git: Git) -> None:
         (git.path / 'a').write_text('content')

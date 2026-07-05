@@ -10,6 +10,7 @@
 - **No stacked headings in docs**: a heading in `docs/*.rst` must be followed by prose, never immediately by a sub-heading. Add a short lead-in or merge the levels.
 - **Type-annotate public APIs**: all public functions and classes need type annotations; mypy is the gate
 - **Use `compare()` in tests**: assert with `compare(actual, expected=...)`, using `StringComparison` for pattern matches. Bare `assert` only for booleans and `isinstance` (which type-narrows for mypy).
+- **No `pytest.MonkeyPatch`**: use testfixtures instead. `TempDirectory(cwd=True)` replaces `monkeypatch.chdir`; for mocking, prefer `Replacer` methods (`replace.in_environ`, `replace.on_class`, `replace.in_module`), or the `replace_in_environ`/`replace_on_class`/`replace_in_module` context managers for one-offs.
 - **No `noqa`, ever**: this project has zero linter suppressions; don't add them. Fix the underlying issue instead.
 - **No `docs/changes.rst` edits during development**: that file is updated at release time, not as part of feature work.
 

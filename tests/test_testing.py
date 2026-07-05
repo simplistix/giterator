@@ -2,8 +2,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-import pytest
-from testfixtures import compare, StringComparison, TempDirectory
+from testfixtures import compare, replace_in_environ, StringComparison, TempDirectory
 
 from giterator import Git, User
 from giterator.testing import Repo
@@ -35,14 +34,12 @@ class TestRepo:
         compare(repo.git('log', '--pretty=format:%ad'), expected='Sat Jan 1 00:00:00 2000 +0000')
         compare(repo.git('log', '--pretty=format:%cd'), expected='Sun Jan 2 00:00:00 2000 +0000')
 
-    def test_make_default_branch_ignores_machine_config(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_make_default_branch_ignores_machine_config(self, tmp_path: Path) -> None:
         config = tmp_path / 'gitconfig'
         config.write_text('[init]\n\tdefaultBranch = unexpected\n')
-        monkeypatch.setenv('GIT_CONFIG_GLOBAL', str(config))
-        repo = Repo.make(tmp_path / 'repo')
-        repo.commit_content('a')
+        with replace_in_environ('GIT_CONFIG_GLOBAL', str(config)):
+            repo = Repo.make(tmp_path / 'repo')
+            repo.commit_content('a')
         compare(repo.branches(), expected=['main'])
 
     def test_make_with_branch(self, tmp_path: Path) -> None:
