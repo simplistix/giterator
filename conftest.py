@@ -7,7 +7,9 @@ from sybil import Sybil
 from sybil.parsers.rest import DocTestParser, PythonCodeBlockParser, SkipParser
 from testfixtures import Replacer, TempDirectory
 
-GIT_CONFIG = b'[user]\n\tname = Giterator\n\temail = giterator@example.com\n'
+GIT_CONFIG = (
+    b'[user]\n\tname = Giterator\n\temail = giterator@example.com\n[init]\n\tdefaultBranch = main\n'
+)
 
 
 @pytest.fixture(scope='module')

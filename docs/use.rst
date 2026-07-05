@@ -52,10 +52,10 @@ committer:
 
 .. code-block:: python
 
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     (repo.path / 'README.rst').write_text('hello')
-    repo.commit('add readme', author_date=datetime(2020, 1, 1))
+    repo.commit('add readme', author_date=datetime(2020, 1, 1, tzinfo=timezone.utc))
 
 :meth:`Git.clone` clones a repo. When the source is a :class:`Git` instance
 with a user configured, that user is carried over to the clone unless a
@@ -69,11 +69,12 @@ Branches and tags are created and listed with :meth:`Git.branch`,
 :meth:`Git.branches`, :meth:`Git.tag` and :meth:`Git.tags`, and their commit
 hashes looked up with :meth:`Git.branch_hashes` and :meth:`Git.tag_hashes`:
 
-.. code-block:: python
-
-    repo.branch('feature')
-    repo.tag('v1.0')
-    print(repo.branches(), repo.tag_hashes())
+>>> repo.branch('feature')
+>>> repo.tag('v1.0')
+>>> repo.branches()
+['feature', 'main']
+>>> repo.tags()
+['v1.0']
 
 
 Examining history
@@ -81,15 +82,27 @@ Examining history
 
 :meth:`Git.log` returns the commits in a repository as :class:`Commit`
 instances, giving structured access to the hash, author, committer, dates
-and full message of each commit:
+and full message of each commit. Here, after committing some docs to go
+with the readme:
 
 .. code-block:: python
 
-    for commit in repo.log('--reverse'):
-        print(commit.committer_date, commit.rev, commit.message)
+    (repo.path / 'docs').mkdir()
+    (repo.path / 'docs' / 'index.rst').write_text('welcome')
+    repo.commit('add docs', author_date=datetime(2020, 2, 1, tzinfo=timezone.utc))
+
+>>> for commit in repo.log():
+...     print(commit.author_date, commit.author.name, commit.message)
+2020-02-01 00:00:00+00:00 Alice add docs
+2020-01-01 00:00:00+00:00 Alice add readme
 
 Any options, revision ranges or paths accepted by ``git log`` can be passed
-as strings, as with ``--reverse`` above.
+as strings, here reversing the order and restricting to commits that touch
+``docs/``:
+
+>>> for commit in repo.log('--reverse', 'docs/'):
+...     print(commit.author_date, commit.message)
+2020-02-01 00:00:00+00:00 add docs
 
 
 Iterating over history
@@ -98,20 +111,24 @@ Iterating over history
 The :func:`read` function replays the history of a repository as a series of
 snapshots taken on a schedule. Each snapshot is a :class:`Giteration` giving
 the path to a checkout of the repository as it was at that point in time,
-along with the revision checked out and the time of the snapshot:
+along with the revision checked out and the time of the snapshot. The
+examples below read a repository with commits at 10:00 on 1 January, 11:00
+on 2 January and 12:00 on 5 January 2001, all UTC:
 
 .. invisible-code-block: python
 
-    def process(path):
-        assert path.exists()
+    from giterator.testing import Repo
 
-.. code-block:: python
+    project = Repo.make('path/to/project')
+    for prefix, day, hour in [('a', 1, 10), ('b', 2, 11), ('c', 5, 12)]:
+        project.commit_content(prefix, datetime(2001, 1, day, hour, tzinfo=timezone.utc))
 
-    from giterator import daily, read
-
-    for giteration in read('path/to/repo', daily.at(16, 0)):
-        print(giteration.at, giteration.rev)
-        process(giteration.path)
+>>> from giterator import daily, read
+>>> for giteration in read('path/to/project', daily.at(16, 0)):
+...     print(giteration.at, giteration.rev)
+2001-01-01 16:00:00+00:00 5ee580a
+2001-01-02 16:00:00+00:00 e3a9fbb
+2001-01-05 16:00:00+00:00 4f0b0f3
 
 Snapshots are made by cloning the repository into a temporary location, so
 the repository itself is never modified. Each checkout is only valid until
@@ -119,13 +136,48 @@ the next snapshot is requested, and is removed when iteration finishes.
 
 The schedule can be :data:`daily`, anchored to a time of day with
 :meth:`Every.at` as above, or any :class:`~datetime.timedelta` giving the gap
-between snapshots. Points on the schedule where the repository had not
-changed since the previous snapshot are skipped, and iteration stops once the
-most recent commit has been seen. The schedule starts at the date of the
-first commit, but ``start`` can be used to begin somewhere else.
+between snapshots. Without an anchor, the schedule ticks from the date of
+the repository's first commit:
+
+>>> from datetime import timedelta
+>>> for giteration in read('path/to/project', timedelta(days=2)):
+...     print(giteration.at, giteration.rev)
+2001-01-01 10:00:00+00:00 5ee580a
+2001-01-03 10:00:00+00:00 e3a9fbb
+2001-01-07 10:00:00+00:00 4f0b0f3
+
+``start`` begins the schedule somewhere else, with the first snapshot giving
+the repository as it stood at that point:
+
+>>> start = datetime(2001, 1, 4, tzinfo=timezone.utc)
+>>> for giteration in read('path/to/project', daily.at(16, 0), start=start):
+...     print(giteration.at, giteration.rev)
+2001-01-04 16:00:00+00:00 e3a9fbb
+2001-01-05 16:00:00+00:00 4f0b0f3
+
+As the examples above show, points on the schedule where the repository had
+not changed since the previous snapshot are skipped, and iteration stops
+once the most recent commit has been seen. Pass ``skip_unchanged=False`` to
+get exactly one snapshot per point instead, useful when whatever consumes
+them expects evenly spaced samples:
+
+>>> snapshots = read('path/to/project', daily.at(16, 0), skip_unchanged=False)
+>>> for giteration in snapshots:
+...     print(giteration.at, giteration.rev)
+2001-01-01 16:00:00+00:00 5ee580a
+2001-01-02 16:00:00+00:00 e3a9fbb
+2001-01-03 16:00:00+00:00 e3a9fbb
+2001-01-04 16:00:00+00:00 e3a9fbb
+2001-01-05 16:00:00+00:00 4f0b0f3
 
 When no schedule is given, a snapshot is yielded for every commit, with the
-time of each snapshot being the date of its commit.
+time of each snapshot being the date of its commit:
+
+>>> for giteration in read('path/to/project'):
+...     print(giteration.at, giteration.rev)
+2001-01-01 10:00:00+00:00 5ee580a
+2001-01-02 11:00:00+00:00 e3a9fbb
+2001-01-05 12:00:00+00:00 4f0b0f3
 
 The :func:`write` function does the reverse, turning a series of snapshots
 into commits in a repository, which is useful when you have dated copies of
@@ -154,18 +206,23 @@ history:
 If the target repository does not already exist, it is created. The content
 of each :class:`Giteration` replaces the content of the repository's work
 tree and is committed using its ``at`` date for both the author and
-committer dates.
+committer dates, with the ``at`` date as the message when none is given:
+
+>>> [commit.message for commit in Git('path/to/new/repo').log()]
+['2001-02-01T00:00:00', '2001-01-01T00:00:00']
 
 Since :func:`read` yields :class:`Giteration` instances and :func:`write`
 accepts them, the two can be combined to resample a repository's history,
 here as it stood at 4pm each day. Commit messages are preserved, as
 :func:`read` fills in the message of each snapshot's source commit:
 
-.. code-block:: python
-
-    from giterator import daily, read, write
-
-    write('path/to/resampled', read('path/to/repo', daily.at(16, 0)))
+>>> from giterator import write
+>>> resampled = write('path/to/resampled', read('path/to/project', daily.at(16, 0)))
+>>> for commit in resampled.log('--reverse'):
+...     print(commit.author_date, commit.message)
+2001-01-01 16:00:00+00:00 a commit
+2001-01-02 16:00:00+00:00 a commit
+2001-01-05 16:00:00+00:00 a commit
 
 The ``giterator`` command line tool builds on the same read/write model to
 move between dated files and commits. ``pack`` looks for files matching a
