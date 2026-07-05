@@ -94,3 +94,37 @@ here as it stood at 4pm each day. Commit messages are preserved, as
     from giterator import daily, read, write
 
     write('path/to/resampled', read('path/to/repo', daily.at(16, 0)))
+
+
+Command line use
+~~~~~~~~~~~~~~~~
+
+The ``giterator`` command line tool packs dated files into a repository and
+unpacks a repository into dated files. Both commands take a mapping of a
+source to a target, separated by a colon.
+
+``pack`` looks for files matching a :meth:`~datetime.datetime.strftime`
+pattern, parses the date out of each file's name, and commits them to the
+repository, oldest first, under the name on the right of the mapping:
+
+.. code-block:: bash
+
+    giterator pack --repo path/to/repo 'downloads/foo-%Y-%m-%d.csv:foo.csv'
+
+If the repository does not already exist, it is created. Files that match
+the shape of the pattern but do not contain a valid date are ignored, and
+any other content already in the repository is left alone.
+
+``unpack`` does the reverse. For each commit in the repository, files
+matching the glob pattern on the left of the mapping are copied to the path
+produced by formatting the commit's date with the pattern on the right:
+
+.. code-block:: bash
+
+    giterator unpack --repo path/to/repo '*.csv:downloads/foo-%Y-%m-%d.csv'
+
+Any directories needed for the target files are created, and existing files
+are overwritten.
+
+If any of the paths involved contain a colon, ``--sep`` can be used to
+change the separator used in the mapping.
