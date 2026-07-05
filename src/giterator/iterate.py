@@ -85,6 +85,7 @@ def read(
     repo: Git | Path | str,
     schedule: Every | timedelta | None = None,
     start: datetime | None = None,
+    skip_unchanged: bool = True,
 ) -> Iterator[Giteration]:
     """
     Iterate over the history of ``repo``, yielding a :class:`Giteration`
@@ -104,7 +105,12 @@ def read(
         When not given, every commit is yielded, with ``at`` set to its
         committer date.
     :param start: Where the schedule starts. Defaults to the date of the
-        repo's first commit. Commits before this point are not yielded.
+        repo's first commit. When no schedule is given, commits before this
+        point are skipped.
+    :param skip_unchanged: Only meaningful with a ``schedule``. When
+        ``False``, points on the schedule at which the repo had not changed
+        are yielded rather than skipped, giving exactly one
+        :class:`Giteration` per point.
     """
     if isinstance(schedule, timedelta):
         schedule = Every(schedule)
@@ -139,6 +145,8 @@ def read(
             if commit.rev != yielded:
                 clone('checkout', '--detach', commit.rev)
                 yielded = commit.rev
+                yield Giteration(clone.path, at=tick, rev=commit.rev, message=commit.message)
+            elif not skip_unchanged:
                 yield Giteration(clone.path, at=tick, rev=commit.rev, message=commit.message)
             if index == len(history) - 1:
                 return

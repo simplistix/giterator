@@ -120,6 +120,21 @@ class TestRead:
             ],
         )
 
+    def test_daily_without_skip_unchanged(self, repo: Repo) -> None:
+        rev_a = repo.commit_content('a', utc(2001, 1, 1, 10))
+        rev_b = repo.commit_content('b', utc(2001, 1, 2, 11))
+        rev_c = repo.commit_content('c', utc(2001, 1, 5, 12))
+        compare(
+            [(g.rev, g.at) for g in read(repo, daily.at(16), skip_unchanged=False)],
+            expected=[
+                (rev_a, utc(2001, 1, 1, 16)),
+                (rev_b, utc(2001, 1, 2, 16)),
+                (rev_b, utc(2001, 1, 3, 16)),
+                (rev_b, utc(2001, 1, 4, 16)),
+                (rev_c, utc(2001, 1, 5, 16)),
+            ],
+        )
+
     def test_path_removed_when_iteration_finishes(self, repo: Repo) -> None:
         repo.commit_content('a', utc(2001, 1, 1, 10))
         paths = []
