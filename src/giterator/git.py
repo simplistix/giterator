@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from os import makedirs
@@ -75,9 +76,16 @@ class Git:
         .. code-block:: python
 
             Git(...)('log', '-1')
+
+        ``env`` supplies additional environment variables, or overrides for
+        existing ones; it is merged with the current process's environment
+        rather than replacing it.
         """
+        full_env = None if env is None else {**os.environ, **env}
         try:
-            output = check_output(('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=env)
+            output = check_output(
+                ('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=full_env
+            )
         except CalledProcessError as e:
             raise GitError(
                 f"{' '.join(e.cmd)!r} gave return code {e.returncode}:\n\n{e.output.decode()}\n\n"
