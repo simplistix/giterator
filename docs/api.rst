@@ -25,3 +25,4 @@ giterator.testing
 .. automodule:: giterator.testing
     :members:
     :member-order: bysource
+    :show-inheritance:

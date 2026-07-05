@@ -29,6 +29,7 @@ dev = [
     "pytest>=8",
     "pytest-cov>=6",
     "ruff>=0.9",
+    "sybil>=10.1",
     "testfixtures>=11",
 ]
 docs = [
@@ -45,7 +46,7 @@ packages = ["src/giterator"]
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest"
-testpaths = ["tests"]
+testpaths = ["tests", "docs"]
 
 [tool.mypy]
 strict = true

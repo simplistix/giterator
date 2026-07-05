@@ -38,14 +38,13 @@ runs ``git`` in the work tree and returns its output as a string:
 If the command fails, a :class:`GitError` is raised carrying git's own
 output:
 
-.. code-block:: python
-
-    from giterator import GitError
-
-    try:
-        repo.git('merge', 'no-such-branch')
-    except GitError as e:
-        print(e)
+>>> repo.git('merge', 'no-such-branch')
+Traceback (most recent call last):
+...
+giterator.git.GitError: 'git merge no-such-branch' gave return code 1:
+<BLANKLINE>
+merge: no-such-branch - not something we can merge
+...
 
 :meth:`Git.commit` stages everything in the work tree, including new and
 deleted files, and commits it, optionally backdating the author and
@@ -101,6 +100,11 @@ snapshots taken on a schedule. Each snapshot is a :class:`Giteration` giving
 the path to a checkout of the repository as it was at that point in time,
 along with the revision checked out and the time of the snapshot:
 
+.. invisible-code-block: python
+
+    def process(path):
+        assert path.exists()
+
 .. code-block:: python
 
     from giterator import daily, read
@@ -127,6 +131,15 @@ The :func:`write` function does the reverse, turning a series of snapshots
 into commits in a repository, which is useful when you have dated copies of
 a project, such as backups, that you would like to turn into version
 history:
+
+.. invisible-code-block: python
+
+    from pathlib import Path
+
+    for day in '2001-01-01', '2001-02-01':
+        backup = Path('backups') / day
+        backup.mkdir(parents=True)
+        (backup / 'notes.txt').write_text(day)
 
 .. code-block:: python
 
@@ -205,7 +218,38 @@ directory for each test:
         commit = repo.log()[0]
         assert commit.message == 'a commit'
 
-:meth:`~Repo.make` is the usual way to create a :class:`~giterator.testing.Repo`.
+.. invisible-code-block: python
+
+    from sybil.testing import run_pytest
+
+    run_pytest(test_something, fixtures=[repo])
+
+    repo = Repo.make(tmp_path / 'sample')
+
+As ``test_something`` shows, :meth:`~giterator.testing.Repo.commit_content`
+makes a commit in a single call: it writes a file named after the prefix
+given, containing content derived from it, and commits with an
+automatically increasing timestamp, so a test can create a string of
+commits without inventing file content or dates by hand. When a test does
+care about those, a specific datetime can be given, and the commit can be
+placed on a new branch or tagged:
+
+.. code-block:: python
+
+    from datetime import datetime
+
+    repo.commit_content('a')
+    repo.commit_content('b', datetime(2021, 6, 1))
+    repo.commit_content('c', tag='v1.0')
+    repo.commit_content('d', branch='feature')
+
+That leaves the work tree with one file per call:
+
+>>> sorted(path.name for path in repo.path.iterdir())
+['.git', 'a', 'b', 'c', 'd']
+
+:meth:`~giterator.testing.Repo.make` is the usual way to create a
+:class:`~giterator.testing.Repo`.
 A :class:`User` and branch name can be given if the defaults, ``Giterator
 <giterator@example.com>`` and ``main``, don't suit a particular test:
 
@@ -217,36 +261,22 @@ A :class:`User` and branch name can be given if the defaults, ``Giterator
         tmp_path / 'repo', user=User('Alice', 'alice@example.com'), branch='trunk'
     )
 
-:meth:`~Repo.clone` works like :meth:`Git.clone`, but ensures the clone
-always has a user configured, even when the source has none, falling back
-to the same default as :meth:`~Repo.make`:
+:meth:`~giterator.testing.Repo.clone` works like :meth:`Git.clone`, but
+ensures the clone always has a user configured, even when the source has
+none, falling back to the same default as
+:meth:`~giterator.testing.Repo.make`:
 
 .. code-block:: python
 
     clone = Repo.clone(repo, tmp_path / 'clone')
 
-:meth:`~Repo.commit` works like :meth:`Git.commit`, but only needs one date:
-when ``commit_date`` is omitted, it defaults to ``author_date`` instead of
-the current time, so commits made in a test have dates you actually
-specified:
+When a test needs full control over the files in a commit, write them and
+use :meth:`~giterator.testing.Repo.commit`. It works like
+:meth:`Git.commit`, except that when ``commit_date`` is omitted it defaults
+to ``author_date``, so one date is enough to pin both of a commit's
+timestamps:
 
 .. code-block:: python
-
-    from datetime import datetime
 
     (repo.path / 'content.txt').write_text('content')
     repo.commit('a commit', datetime(2020, 1, 1))
-
-:meth:`~Repo.commit_content` is a shortcut for the common case of writing a
-file and committing it in one step, optionally on a new branch or tagging
-the result:
-
-.. code-block:: python
-
-    repo.commit_content('data', tag='v1.0')
-    repo.commit_content('other', branch='feature')
-
-Each call writes a file named after ``prefix`` containing some content
-derived from it, then commits it. When no datetime is given, each commit
-gets an automatically increasing timestamp, so a test can create several
-commits in sequence without needing to invent dates by hand.
