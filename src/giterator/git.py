@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+from dataclasses import dataclass
+from datetime import datetime
 from os import makedirs
 from pathlib import Path
 from subprocess import check_output, STDOUT, CalledProcessError
@@ -8,14 +11,39 @@ from typing import Self
 from .typing import Date
 
 
+@dataclass
 class User:
     """
     Represents a git user, for configuring a repo.
     """
 
-    def __init__(self, name: str, email: str):
-        self.name = name
-        self.email = email
+    #: The name of the user.
+    name: str
+    #: The email address of the user.
+    email: str
+
+
+@dataclass
+class Commit:
+    """
+    A commit from the log of a repo.
+    """
+
+    #: The short hash of the commit.
+    rev: str
+    #: The author of the commit.
+    author: User
+    #: The author date of the commit.
+    author_date: datetime
+    #: The committer of the commit.
+    committer: User
+    #: The committer date of the commit.
+    committer_date: datetime
+    #: The full commit message, without any trailing newlines.
+    message: str
+
+
+LOG_FORMAT = '%x00'.join(('%h', '%an', '%ae', '%aI', '%cn', '%ce', '%cI', '%B')) + '%x00'
 
 
 class GitError(Exception):
@@ -48,9 +76,16 @@ class Git:
         .. code-block:: python
 
             Git(...)('log', '-1')
+
+        ``env`` supplies additional environment variables, or overrides for
+        existing ones; it is merged with the current process's environment
+        rather than replacing it.
         """
+        full_env = None if env is None else {**os.environ, **env}
         try:
-            output = check_output(('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=env)
+            output = check_output(
+                ('git',) + command, cwd=cwd or self.path, stderr=STDOUT, env=full_env
+            )
         except CalledProcessError as e:
             raise GitError(
                 f"{' '.join(e.cmd)!r} gave return code {e.returncode}:\n\n{e.output.decode()}\n\n"
@@ -120,6 +155,7 @@ class Git:
         author_date: Date | None = None,
         commit_date: Date | None = None,
         short: bool = True,
+        allow_empty: bool = False,
     ) -> str:
         """
         Commit changes in this repo, including and new or deleted files.
@@ -128,9 +164,12 @@ class Git:
         :param author_date: The author date.
         :param commit_date: The commit date. Defaults to author date if not specified.
         :param short: Return the short commit hash instead of the full 40-character hash.
+        :param allow_empty: Allow a commit to be made even when there are no changes.
         """
         self('add', '.')
         command = ['commit', '-m', msg]
+        if allow_empty:
+            command.append('--allow-empty')
         if author_date:
             command.extend(['--date', self._coerce_date(author_date)])
         env: dict[str, str] = {}
@@ -145,6 +184,40 @@ class Git:
             command.append('--short')
         command.append(label)
         return self(*command).strip()
+
+    def log(self, *options: str) -> list[Commit]:
+        """
+        Return the commits in this repo as a list of :class:`Commit`
+        instances, most recent first.
+
+        :param options: Any options, revision ranges or paths that
+            ``git log`` accepts.
+        """
+        commits = []
+        for record in self('log', '--format=' + LOG_FORMAT, *options).split('\x00\n'):
+            if not record:
+                continue
+            (
+                rev,
+                author_name,
+                author_email,
+                author_date,
+                committer_name,
+                committer_email,
+                committer_date,
+                message,
+            ) = record.split('\x00')
+            commits.append(
+                Commit(
+                    rev=rev,
+                    author=User(author_name, author_email),
+                    author_date=datetime.fromisoformat(author_date),
+                    committer=User(committer_name, committer_email),
+                    committer_date=datetime.fromisoformat(committer_date),
+                    message=message.rstrip('\n'),
+                )
+            )
+        return commits
 
     def tag(self, name: str) -> None:
         """

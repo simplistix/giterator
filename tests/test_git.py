@@ -1,11 +1,12 @@
 import os
 from datetime import datetime, timezone
 
+import pytest
 from testfixtures import TempDirectory, compare, ShouldRaise, StringComparison
 
-from giterator import Git, User
+from giterator import Commit, Git, User
 from giterator.git import GitError
-from giterator.testing import Repo
+from giterator.testing import DEFAULT_USER, Repo
 
 
 class TestCall:
@@ -149,6 +150,44 @@ class TestCommit:
             expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n',
         )
 
+    def test_multi_line_message(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('subject\n\nbody line 1\nbody line 2')
+        compare(git('log', '--format=%B'), expected='subject\n\nbody line 1\nbody line 2\n\n')
+
+    def test_identity_from_environment(
+        self, tmpdir: TempDirectory, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Only environment variables carry identity here, no repo-local
+        # user.name/email and no reliance on the machine's global git config,
+        # so this fails unless env is merged with the process environment
+        # rather than replacing it for the internal 'git commit' call.
+        monkeypatch.setenv('GIT_AUTHOR_NAME', 'Env Author')
+        monkeypatch.setenv('GIT_AUTHOR_EMAIL', 'env@example.com')
+        monkeypatch.setenv('GIT_COMMITTER_NAME', 'Env Author')
+        monkeypatch.setenv('GIT_COMMITTER_EMAIL', 'env@example.com')
+        git = Git(tmpdir.getpath('env-repo'))
+        git.init()
+        (git.path / 'a').write_text('content')
+        git.commit('a commit', commit_date=datetime(2000, 1, 1))
+        compare(git('log', '--format=%an <%ae>'), expected='Env Author <env@example.com>\n')
+
+    def test_nothing_to_commit(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('commit 1')
+        with ShouldRaise(GitError) as s:
+            git.commit('commit 2')
+        compare(
+            str(s.raised),
+            expected=StringComparison(r'(?s).*gave return code 1:.*nothing to commit.*'),
+        )
+
+    def test_nothing_to_commit_allow_empty(self, git: Git) -> None:
+        (git.path / 'a').write_text('content')
+        git.commit('commit 1')
+        git.commit('commit 2', allow_empty=True)
+        compare(git('log', '--reverse', '--format=%s'), expected='commit 1\ncommit 2\n')
+
     def test_with_tz_datetime(self, git: Git) -> None:
         (git.path / 'a').write_text('content')
         dt = datetime(2001, 1, 1, 10).astimezone(timezone.utc)
@@ -156,6 +195,59 @@ class TestCommit:
         compare(
             git('log', '--format=%aI %cI').replace("Z", "+00:00"),
             expected='2001-01-01T10:00:00+00:00 2001-01-01T10:00:00+00:00\n',
+        )
+
+
+class TestLog:
+    def test_empty_repo(self, repo: Repo) -> None:
+        with ShouldRaise(GitError):
+            repo.log()
+
+    def test_commits(self, repo: Repo) -> None:
+        rev_1 = repo.commit_content('a', datetime(2001, 1, 1, 10, tzinfo=timezone.utc))
+        rev_2 = repo.commit_content('b', datetime(2001, 1, 2, 12, tzinfo=timezone.utc))
+        compare(
+            repo.log(),
+            expected=[
+                Commit(
+                    rev=rev_2,
+                    author=DEFAULT_USER,
+                    author_date=datetime(2001, 1, 2, 12, tzinfo=timezone.utc),
+                    committer=DEFAULT_USER,
+                    committer_date=datetime(2001, 1, 2, 12, tzinfo=timezone.utc),
+                    message='a commit',
+                ),
+                Commit(
+                    rev=rev_1,
+                    author=DEFAULT_USER,
+                    author_date=datetime(2001, 1, 1, 10, tzinfo=timezone.utc),
+                    committer=DEFAULT_USER,
+                    committer_date=datetime(2001, 1, 1, 10, tzinfo=timezone.utc),
+                    message='a commit',
+                ),
+            ],
+        )
+
+    def test_options(self, repo: Repo) -> None:
+        rev_1 = repo.commit_content('a', datetime(2001, 1, 1, 10, tzinfo=timezone.utc))
+        rev_2 = repo.commit_content('b', datetime(2001, 1, 2, 12, tzinfo=timezone.utc))
+        compare(
+            [commit.rev for commit in repo.log('--reverse')],
+            expected=[rev_1, rev_2],
+        )
+        compare(
+            [commit.rev for commit in repo.log('-1')],
+            expected=[rev_2],
+        )
+
+    def test_multi_line_message(self, git: Git) -> None:
+        (git.path / 'a').write_text('a content')
+        git.commit('subject\n\nbody line 1\nbody line 2', datetime(2001, 1, 1))
+        (git.path / 'b').write_text('b content')
+        git.commit('another commit', datetime(2001, 1, 2))
+        compare(
+            [commit.message for commit in git.log()],
+            expected=['another commit', 'subject\n\nbody line 1\nbody line 2'],
         )
 
 
