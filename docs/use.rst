@@ -83,7 +83,8 @@ dates.
 
 Since :func:`read` yields :class:`Giteration` instances and :func:`write`
 accepts them, the two can be combined to resample a repository's history,
-here as it stood at 4pm each day:
+here as it stood at 4pm each day. Commit messages are preserved, as
+:func:`read` fills in the message of each snapshot's source commit:
 
 .. code-block:: python
 

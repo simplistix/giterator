@@ -57,7 +57,8 @@ class Giteration:
     :param path: The path of a directory containing the content.
     :param at: When the content was current.
     :param rev: The revision the content came from, filled in by :func:`read`.
-    :param message: The commit message for :func:`write` to use.
+    :param message: The commit message for :func:`write` to use,
+        filled in from the source commit by :func:`read`.
     """
 
     def __init__(
@@ -76,6 +77,7 @@ class Giteration:
         #: The revision the content came from.
         self.rev: str | None = rev
         #: The commit message for :func:`write` to use.
+        #: :func:`read` fills this in from the source commit.
         self.message: str | None = message
 
 
@@ -109,15 +111,11 @@ def read(
     with TemporaryDirectory() as checkout_dir:
         clone = Git.clone(repo, Path(checkout_dir) / 'clone')
         try:
-            log = clone('log', '--first-parent', '--reverse', '--format=%h %cI')
+            history = clone.log('--first-parent', '--reverse')
         except GitError:
             return
-        commits = []
-        for line in log.splitlines():
-            rev, _, stamp = line.partition(' ')
-            commits.append((rev, datetime.fromisoformat(stamp)))
         if start is None:
-            begin = commits[0][1]
+            begin = history[0].committer_date
         elif start.tzinfo is None:
             begin = start.astimezone()
         else:
@@ -125,16 +123,16 @@ def read(
         index = -1
         yielded = None
         for tick in schedule.ticks(begin):
-            while index + 1 < len(commits) and commits[index + 1][1] <= tick:
+            while index + 1 < len(history) and history[index + 1].committer_date <= tick:
                 index += 1
             if index < 0:
                 continue
-            rev = commits[index][0]
-            if rev != yielded:
-                clone('checkout', '--detach', rev)
-                yielded = rev
-                yield Giteration(clone.path, at=tick, rev=rev)
-            if index == len(commits) - 1:
+            commit = history[index]
+            if commit.rev != yielded:
+                clone('checkout', '--detach', commit.rev)
+                yielded = commit.rev
+                yield Giteration(clone.path, at=tick, rev=commit.rev, message=commit.message)
+            if index == len(history) - 1:
                 return
 
 

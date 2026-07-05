@@ -88,12 +88,12 @@ class TestRead:
         results = []
         for giteration in read(repo, daily.at(16)):
             files = sorted(p.name for p in giteration.path.iterdir() if p.name != '.git')
-            results.append((giteration.rev, giteration.at, files))
+            results.append((giteration.rev, giteration.at, giteration.message, files))
         compare(
             results,
             expected=[
-                (rev_b, utc(2001, 1, 1, 16), ['a', 'b']),
-                (rev_c, utc(2001, 1, 3, 16), ['a', 'b', 'c']),
+                (rev_b, utc(2001, 1, 1, 16), 'a commit', ['a', 'b']),
+                (rev_c, utc(2001, 1, 3, 16), 'a commit', ['a', 'b', 'c']),
             ],
         )
 
@@ -240,13 +240,23 @@ class TestWrite:
         )
         compare(
             resampled('log', '--reverse', '--format=%cI %s').replace('Z ', '+00:00 '),
-            expected=(
-                '2001-01-01T16:00:00+00:00 2001-01-01T16:00:00+00:00\n'
-                '2001-01-03T16:00:00+00:00 2001-01-03T16:00:00+00:00\n'
-            ),
+            expected=('2001-01-01T16:00:00+00:00 a commit\n2001-01-03T16:00:00+00:00 a commit\n'),
         )
         compare(
             resampled('ls-files').split(),
             expected=['a', 'b', 'c'],
         )
         compare((resampled.path / 'c').read_text(), expected='c content')
+
+    def test_round_trip_multi_line_message(self, repo: Repo, tmpdir: TempDirectory) -> None:
+        (repo.path / 'a').write_text('content')
+        repo.commit('subject\n\nbody line 1\nbody line 2', utc(2001, 1, 1, 10))
+        resampled = write(
+            tmpdir.getpath('resampled'),
+            read(repo, daily),
+            user=User(name='Giterator', email='giterator@example.com'),
+        )
+        compare(
+            resampled('log', '--format=%B'),
+            expected='subject\n\nbody line 1\nbody line 2\n\n',
+        )
