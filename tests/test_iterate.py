@@ -81,6 +81,29 @@ class TestRead:
     def test_empty_repo(self, repo: Repo) -> None:
         compare(list(read(repo, daily)), expected=[])
 
+    def test_every_commit(self, repo: Repo) -> None:
+        rev_a = repo.commit_content('a', utc(2001, 1, 1, 10))
+        rev_b = repo.commit_content('b', utc(2001, 1, 1, 12))
+        results = []
+        for giteration in read(repo):
+            files = sorted(p.name for p in giteration.path.iterdir() if p.name != '.git')
+            results.append((giteration.rev, giteration.at, giteration.message, files))
+        compare(
+            results,
+            expected=[
+                (rev_a, utc(2001, 1, 1, 10), 'a commit', ['a']),
+                (rev_b, utc(2001, 1, 1, 12), 'a commit', ['a', 'b']),
+            ],
+        )
+
+    def test_every_commit_with_start(self, repo: Repo) -> None:
+        repo.commit_content('a', utc(2001, 1, 1, 10))
+        rev_b = repo.commit_content('b', utc(2001, 1, 2, 12))
+        compare(
+            [(g.rev, g.at) for g in read(repo, start=utc(2001, 1, 2))],
+            expected=[(rev_b, utc(2001, 1, 2, 12))],
+        )
+
     def test_daily(self, repo: Repo) -> None:
         repo.commit_content('a', utc(2001, 1, 1, 10))
         rev_b = repo.commit_content('b', utc(2001, 1, 1, 12))

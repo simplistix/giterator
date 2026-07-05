@@ -83,14 +83,14 @@ class Giteration:
 
 def read(
     repo: Git | Path | str,
-    schedule: Every | timedelta,
+    schedule: Every | timedelta | None = None,
     start: datetime | None = None,
 ) -> Iterator[Giteration]:
     """
     Iterate over the history of ``repo``, yielding a :class:`Giteration`
-    for each point on ``schedule`` at which the repo had changed since the
-    previous point. Iteration stops once the most recent commit has been
-    yielded.
+    for each commit. When a ``schedule`` is given, one is instead yielded
+    for each point on it at which the repo had changed since the previous
+    point, and iteration stops once the most recent commit has been yielded.
 
     The repo is cloned into a temporary location and each revision is checked
     out there, so the repo itself is never modified. The path of each
@@ -101,8 +101,10 @@ def read(
     :param schedule: The points in time at which to sample the repo's history,
         either an :class:`Every` instance such as :data:`daily` or a
         :class:`~datetime.timedelta` giving the gap between points.
+        When not given, every commit is yielded, with ``at`` set to its
+        committer date.
     :param start: Where the schedule starts. Defaults to the date of the
-        repo's first commit.
+        repo's first commit. Commits before this point are not yielded.
     """
     if isinstance(schedule, timedelta):
         schedule = Every(schedule)
@@ -114,12 +116,18 @@ def read(
             history = clone.log('--first-parent', '--reverse')
         except GitError:
             return
-        if start is None:
-            begin = history[0].committer_date
-        elif start.tzinfo is None:
-            begin = start.astimezone()
-        else:
-            begin = start
+        if start is not None and start.tzinfo is None:
+            start = start.astimezone()
+        if schedule is None:
+            for commit in history:
+                if start is not None and commit.committer_date < start:
+                    continue
+                clone('checkout', '--detach', commit.rev)
+                yield Giteration(
+                    clone.path, at=commit.committer_date, rev=commit.rev, message=commit.message
+                )
+            return
+        begin = start if start is not None else history[0].committer_date
         index = -1
         yielded = None
         for tick in schedule.ticks(begin):

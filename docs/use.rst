@@ -58,6 +58,9 @@ changed since the previous snapshot are skipped, and iteration stops once the
 most recent commit has been seen. The schedule starts at the date of the
 first commit, but ``start`` can be used to begin somewhere else.
 
+When no schedule is given, a snapshot is yielded for every commit, with the
+time of each snapshot being the date of its commit.
+
 
 Writing snapshots as commits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
