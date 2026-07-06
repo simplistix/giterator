@@ -4,7 +4,7 @@ giterator
 |Docs|_ |PyPI|_ |Git|_
 
 .. |Docs| image:: https://readthedocs.org/projects/giterator/badge/?version=latest
-.. _Docs: http://giterator.readthedocs.org/en/latest/
+.. _Docs: https://giterator.readthedocs.io/
 
 .. |PyPI| image:: https://badge.fury.io/py/giterator.svg
 .. _PyPI: https://pypi.org/project/giterator/
@@ -25,4 +25,4 @@ Python tools for doing git things:
 - ``giterator.testing.Repo`` makes sample repositories for automated tests,
   with machine-independent configuration and single-call commits.
 
-Full documentation is available at http://giterator.readthedocs.org/en/latest/
+Full documentation is available at https://giterator.readthedocs.io/

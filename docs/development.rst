@@ -5,7 +5,7 @@ Development
 
 The latest development version of the documentation can be found here:
 
-http://giterator.readthedocs.org/en/latest/
+https://giterator.readthedocs.io/
 
 If you wish to contribute to this project, then you should fork the
 repository found here:

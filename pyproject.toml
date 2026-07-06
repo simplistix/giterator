@@ -15,9 +15,9 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/simplistix/giterator"
-Documentation = "https://giterator.readthedocs.org/en/latest/"
+Documentation = "https://giterator.readthedocs.io/"
 Repository = "https://github.com/simplistix/giterator"
-Changelog = "https://giterator.readthedocs.io/en/latest/changes.html"
+Changelog = "https://giterator.readthedocs.io/latest/changes.html"
 
 [project.scripts]
 giterator = "giterator.cli:main"
