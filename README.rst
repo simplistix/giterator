@@ -1,13 +1,16 @@
 giterator
 =========
 
-|CI|_ |Docs|_
-
-.. |CI| image:: https://github.com/simplistix/giterator/actions/workflows/ci.yml/badge.svg
-.. _CI: https://github.com/simplistix/giterator/actions/workflows/ci.yml
+|Docs|_ |PyPI|_ |Git|_
 
 .. |Docs| image:: https://readthedocs.org/projects/giterator/badge/?version=latest
 .. _Docs: http://giterator.readthedocs.org/en/latest/
+
+.. |PyPI| image:: https://badge.fury.io/py/giterator.svg
+.. _PyPI: https://pypi.org/project/giterator/
+
+.. |Git| image:: https://github.com/simplistix/giterator/actions/workflows/ci.yml/badge.svg
+.. _Git: https://github.com/simplistix/giterator
 
 Python tools for doing git things:
 
