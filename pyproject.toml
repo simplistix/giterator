@@ -1,6 +1,6 @@
 [project]
 name = "giterator"
-version = "0.4.0"
+version = "1.0.0"
 description = "Python tools for doing git things."
 readme = "README.rst"
 authors = [{ name = "Chris Withers", email = "chris@withers.org" }]
