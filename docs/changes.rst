@@ -3,6 +3,11 @@
 Changes
 =======
 
+1.1.0 (10 Jul 2026)
+-------------------
+
+- :meth:`Git.init` now accepts a ``bare`` parameter to create a bare repository.
+
 1.0.0 (6 Jul 2026)
 ------------------
 
