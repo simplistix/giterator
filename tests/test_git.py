@@ -44,6 +44,40 @@ class TestInit:
         git.init(branch='trunk')
         compare(git('symbolic-ref', 'HEAD'), expected='refs/heads/trunk\n')
 
+    def test_init_bare(self, tmpdir: TempDirectory) -> None:
+        git = Git(tmpdir.getpath('foo'))
+        git.init(bare=True)
+        assert os.path.exists(tmpdir.getpath('foo/HEAD'))
+        assert not os.path.exists(tmpdir.getpath('foo/.git'))
+        compare(git('rev-parse', '--is-bare-repository'), expected='true\n')
+
+    def test_init_bare_with_user(self, tmpdir: TempDirectory) -> None:
+        git = Git(tmpdir.getpath('foo'))
+        git.init(User(name='Foo Bar', email='foo@example.com'), bare=True)
+        config = tmpdir.read('foo/config', encoding='utf-8')
+        compare(
+            config,
+            expected=StringComparison(r'(?s).*name = Foo Bar.*email = foo@example\.com.*'),
+        )
+
+    def test_init_bare_with_branch(self, tmpdir: TempDirectory) -> None:
+        git = Git(tmpdir.getpath('foo'))
+        git.init(branch='trunk', bare=True)
+        compare(git('symbolic-ref', 'HEAD'), expected='refs/heads/trunk\n')
+
+    def test_init_bare_worktree_shares_user(self, tmpdir: TempDirectory) -> None:
+        user = User(name='Foo Bar', email='foo@example.com')
+        bare = Git(tmpdir.getpath('foo'))
+        bare.init(user, branch='main', bare=True)
+        bare('worktree', 'add', '--orphan', '-b', 'main', tmpdir.getpath('wt'))
+
+        worktree = Git(tmpdir.getpath('wt'))
+        tmpdir.write('wt/some.txt', b'content')
+        worktree.commit('a commit')
+
+        (commit,) = worktree.log()
+        compare(commit.author, expected=user)
+
 
 class TestClone:
     def test_minimal(self, repo: Repo, tmpdir: TempDirectory) -> None:

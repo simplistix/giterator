@@ -76,6 +76,29 @@ hashes looked up with :meth:`Git.branch_hashes` and :meth:`Git.tag_hashes`:
 >>> repo.tags()
 ['v1.0']
 
+Passing ``bare=True`` to :meth:`Git.init` creates a bare repository instead.
+A worktree of a bare repo shares its config, so configuring a ``user`` there
+means commits made in those worktrees don't depend on the git configuration
+of the machine running the tests:
+
+.. code-block:: python
+
+    bare = Git('path/to/bare.git')
+    bare.init(User('Alice', 'alice@example.com'), branch='main', bare=True)
+    bare.git('worktree', 'add', '--orphan', '-b', 'main', '../worktree')
+
+.. invisible-code-block: python
+
+    from pathlib import Path
+
+    (Path('path/to/worktree') / 'greeting.txt').write_text('hello')
+
+>>> worktree = Git('path/to/worktree')
+>>> worktree.commit('add greeting')
+'...'
+>>> worktree.log()[0].author
+User(name='Alice', email='alice@example.com')
+
 
 Examining history
 ~~~~~~~~~~~~~~~~~~

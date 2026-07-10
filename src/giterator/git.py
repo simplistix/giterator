@@ -100,7 +100,7 @@ class Git:
             self('config', 'user.name', user.name)
             self('config', 'user.email', user.email)
 
-    def init(self, user: User | None = None, branch: str | None = None) -> None:
+    def init(self, user: User | None = None, branch: str | None = None, bare: bool = False) -> None:
         """
         Create an empty Git repository or reinitialize an existing one.
         If the path doesn't exist, it will be created. This includes any missing
@@ -109,9 +109,15 @@ class Git:
         :param user: The user to configure in the local repo.
         :param branch: The name to use for the initial branch. If not specified,
             the machine's git default is used.
+        :param bare: If ``True``, create a bare repository. Worktrees of a bare
+            repo share its config, so configuring ``user`` here is what makes
+            commits in those worktrees work without depending on the git config
+            of the machine the tests are running on.
         """
         makedirs(self.path, exist_ok=True)
         command = ['init']
+        if bare:
+            command.append('--bare')
         if branch:
             command.extend(['-b', branch])
         self(*command)
