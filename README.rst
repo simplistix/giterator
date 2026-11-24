@@ -3,7 +3,7 @@ giterator
 
 |Docs|_ |PyPI|_ |Git|_
 
-.. |Docs| image:: https://readthedocs.org/projects/giterator/badge/?version=latest
+.. |Docs| image:: https://img.shields.io/readthedocs/giterator/latest
 .. _Docs: https://giterator.readthedocs.io/
 
 .. |PyPI| image:: https://badge.fury.io/py/giterator.svg
